@@ -1,0 +1,5 @@
+1̶.̶ S̶e̶t̶u̶p̶ b̶a̶s̶i̶c̶ f̶i̶l̶e̶s̶
+2. Connect to database
+3̶.̶ H̶a̶v̶e̶ t̶i̶m̶e̶r̶ w̶i̶d̶g̶e̶t̶
+4. Ability to create and see tasks
+5. View all running applications and their time shown

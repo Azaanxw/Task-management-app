@@ -47,37 +47,58 @@ updateTimerDisplay();
 
 
 // Track time spent on applications
-const appUsageData = {}; // Store application usage
+// Store application usage data
+const appUsageData = {};
 let lastActiveApp = null;
 let lastActiveTime = Date.now();
 
-// Function to update application usage data
-async function trackApplicationUsage() {
-    const activeApp = await window.appTracker.getActiveApplication();
-    const now = Date.now();
-
-    if (activeApp) {
-        const appName = activeApp.name;
-
-        // Track time spent on the last active app
-        if (lastActiveApp && lastActiveApp !== appName) {
-            const elapsedTime = Math.round((now - lastActiveTime) / 1000); // in seconds
-            appUsageData[lastActiveApp] = (appUsageData[lastActiveApp] || 0) + elapsedTime;
-            lastActiveTime = now;
-        }
-
-        lastActiveApp = appName;
-
-        // Update the UI
-        const appList = document.getElementById('app-usage-list');
-        appList.innerHTML = Object.entries(appUsageData)
-            .map(([app, time]) => `<li>${app}: ${time} seconds</li>`)
-            .join('');
-    }
+// Utility function to format time in HH:MM:SS
+function formatTime(seconds) {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs
+        .toString()
+        .padStart(2, '0')}`;
 }
 
-// Track active applications every second
+// Function to update the application usage list in the UI
+function renderAppUsage() {
+    const appList = document.getElementById("app-usage-list");
+    appList.innerHTML = Object.entries(appUsageData)
+        .map(([app, time]) => `<li><strong>${app}</strong>: ${formatTime(time)}</li>`)
+        .join("");
+}
+
+// Function to track active applications continuously
+async function trackApplicationUsage() {
+    const now = Date.now();
+
+    // Fetch the currently active application
+    const activeApp = await window.appTracker.getActiveApplication();
+    const appName = activeApp ? activeApp.name : null;
+
+    // Skip tracking for the Electron app or other apps to exclude
+    if (appName === "Electron" || appName === "YourAppName") {
+        return;
+    }
+
+    // Update time spent on the last active app
+    if (lastActiveApp) {
+        const elapsedTime = Math.round((now - lastActiveTime) / 1000); // in seconds
+        appUsageData[lastActiveApp] = (appUsageData[lastActiveApp] || 0) + elapsedTime;
+    }
+
+    lastActiveApp = appName;
+    lastActiveTime = now;
+
+    // Render the updated data
+    renderAppUsage();
+}
+
+// Call `trackApplicationUsage` every second
 setInterval(trackApplicationUsage, 1000);
+
 
 
 // Adding tasks 

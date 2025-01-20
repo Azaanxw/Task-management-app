@@ -16,5 +16,4 @@ jspm_packages/
 .npm
 
 
-package.json
 package-lock.json

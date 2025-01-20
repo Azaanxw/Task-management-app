@@ -59,7 +59,20 @@
             <!-- Tracked applications and their times will be displayed here -->
         </ul>
     </div>
+    <h2> Tasks </h2>
+    <div class="container">
+        <!-- Folder Management -->
+        <h2>Folders</h2>
+        <input type="text" id="folder-name" placeholder="New Folder Name">
+        <button onclick="addFolder()">Add Folder</button>
+        <ul id="folder-list"></ul>
 
+        <!-- Task Management -->
+        <h2>Tasks in Folder: <span id="current-folder">None</span></h2>
+        <input type="text" id="task-title" placeholder="New Task Title">
+        <button onclick="addTask()">Add Task</button>
+        <ul id="task-list"></ul>
+    </div>
     <script src="renderer.js"></script>
 </body>
 </html>

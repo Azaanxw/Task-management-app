@@ -78,3 +78,96 @@ async function trackApplicationUsage() {
 
 // Track active applications every second
 setInterval(trackApplicationUsage, 1000);
+
+
+// Adding tasks 
+// Folder and Task Data Structure
+const folders = {}; // Example: { "Work": [{ title: "Complete project", completed: false }] }
+let currentFolder = null; // Tracks the currently selected folder
+
+// Function to render folder list
+function renderFolders() {
+    const folderList = document.getElementById("folder-list");
+    folderList.innerHTML = Object.keys(folders)
+        .map(
+            (folder) => `
+        <li>
+            <span>${folder}</span>
+            <button onclick="selectFolder('${folder}')">Open</button>
+        </li>
+        `
+        )
+        .join("");
+}
+
+// Function to render tasks in the current folder
+function renderTasks() {
+    const taskList = document.getElementById("task-list");
+    if (!currentFolder) {
+        taskList.innerHTML = "<p>Please select a folder to view tasks.</p>";
+        return;
+    }
+    const tasks = folders[currentFolder];
+    taskList.innerHTML = tasks
+        .map(
+            (task, index) => `
+        <li>
+            <span style="text-decoration: ${task.completed ? "line-through" : "none"}">
+                ${task.title}
+            </span>
+            <button onclick="toggleTaskCompletion('${currentFolder}', ${index})">
+                ${task.completed ? "Undo" : "Complete"}
+            </button>
+        </li>
+        `
+        )
+        .join("");
+}
+
+// Function to add a folder
+function addFolder() {
+    const folderName = document.getElementById("folder-name").value.trim();
+    if (!folderName) {
+        alert("Folder name cannot be empty.");
+        return;
+    }
+    if (folders[folderName]) {
+        alert("Folder already exists.");
+        return;
+    }
+    folders[folderName] = [];
+    document.getElementById("folder-name").value = ""; // Clear input
+    renderFolders();
+}
+
+// Function to add a task to the current folder
+function addTask() {
+    if (!currentFolder) {
+        alert("Please select a folder first.");
+        return;
+    }
+    const taskTitle = document.getElementById("task-title").value.trim();
+    if (!taskTitle) {
+        alert("Task title cannot be empty.");
+        return;
+    }
+    folders[currentFolder].push({ title: taskTitle, completed: false });
+    document.getElementById("task-title").value = ""; // Clear input
+    renderTasks();
+}
+
+// Function to toggle task completion
+function toggleTaskCompletion(folder, taskIndex) {
+    folders[folder][taskIndex].completed = !folders[folder][taskIndex].completed;
+    renderTasks();
+}
+
+// Function to select a folder
+function selectFolder(folder) {
+    currentFolder = folder;
+    document.getElementById("current-folder").innerText = folder;
+    renderTasks();
+}
+
+// Initial Render
+renderFolders();

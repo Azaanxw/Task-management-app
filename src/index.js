@@ -18,7 +18,7 @@ app.on('ready', () => {
     mainWindow.loadFile(path.join(__dirname, 'index.html'));
 });
 
-// Quit the app when all windows are closed
+// Quits the app when all windows are closed
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
@@ -42,11 +42,11 @@ db.connect((err) => {
     console.log('Connected to MySQL database.');
 });
 
-// Handle database queries from the renderer process
+// Handles database queries from the renderer process
 ipcMain.handle('db-query', async (event, queryString) => {
     return new Promise((resolve, reject) => {
         db.query(queryString, (err, results) => {
-            if (err) {
+            if (err) {   
                 console.error('Error executing query:', err.message);
                 reject(err);
             } else {

@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html  data-theme="valentine" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="index.css">
+    <link href="./output.css" rel="stylesheet">
     <title>Task Management App</title>
 </head>
-<body>
+<body >
     <h1>Task Management App</h1>
     <div class="container">
         <!-- Timer Widget -->
         <div class="timer-widget">
             <h2>Focus Timer</h2>
             <div id="timer-display">25:00</div>
-            <button id="start-timer">Start Timer</button>
-            <button id="pause-timer">Pause Timer</button>
+            <button class="btn btn-neutral" id="start-timer">Start Timer</button>
+            <button class="btn btn-neutral" id="pause-timer">Pause Timer</button>
         </div>
     </div>
     <h2> Application tracker</h2>
@@ -29,13 +29,13 @@
         <!-- Folder Management -->
         <h2>Folders</h2>
         <input type="text" id="folder-name" placeholder="New Folder Name">
-        <button onclick="addFolder()">Add Folder</button>
+        <button class="btn btn-neutral" onclick="addFolder()">Add Folder</button>
         <ul id="folder-list"></ul>
 
         <!-- Task Management -->
         <h2>Tasks in Folder: <span id="current-folder">None</span></h2>
         <input type="text" id="task-title" placeholder="New Task Title">
-        <button onclick="addTask()">Add Task</button>
+        <button class="btn btn-neutral" onclick="addTask()">Add Task</button>
         <ul id="task-list"></ul>
     </div>
     <script src="renderer.js"></script>

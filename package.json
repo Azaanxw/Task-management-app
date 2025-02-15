@@ -8,13 +8,28 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
-    "electron": "^34.0.0"
+    "autoprefixer": "^10.4.20",
+    "daisyui": "^5.0.0-beta.8",
+    "electron": "^34.2.0",
+    "tailwindcss": "^4.0.6"
   },
   "dependencies": {
+    "@tailwindcss/cli": "^4.0.6",
+    "@tailwindcss/postcss": "^4.0.6",
     "active-win": "^8.2.1",
     "dotenv": "^16.4.7",
-    "mysql2": "^3.12.0"
-  }
+    "install": "^0.13.0",
+    "mysql2": "^3.12.0",
+    "npm": "^11.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Azaanxw/Main.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Azaanxw/Main/issues"
+  },
+  "homepage": "https://github.com/Azaanxw/Main#readme",
+  "description": ""
 }

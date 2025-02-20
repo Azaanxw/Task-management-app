@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html  data-theme="valentine" lang="en">
+<html  data-theme="dark" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,18 @@
     <title>Task Management App</title>
 </head>
 <body >
-    <h1>Task Management App</h1>
+    <h1 class="text-4xl font-extrabold text-center text-pink-500 dark:text-pink-400 rounded-lg p-2">
+        Task Management App 🎉
+    </h1>
+    
+    <!-- Dark/light mode widget -->
+     <div class="container">
+    <label>
+        <span class="label-text">Dark Mode</span>
+        <input type="checkbox" value="light" class="toggle theme-controller" />
+        <span class="label-text">Light Mode</span>
+      </label>
+    </div>
     <div class="container">
         <!-- Timer Widget -->
         <div class="timer-widget">
@@ -28,13 +39,13 @@
     <div class="container">
         <!-- Folder Management -->
         <h2>Folders</h2>
-        <input type="text" id="folder-name" placeholder="New Folder Name">
+        <input type="text" class="input input-ghost w-full max-w-xs" id="folder-name" placeholder="New Folder Name">
         <button class="btn btn-neutral" onclick="addFolder()">Add Folder</button>
         <ul id="folder-list"></ul>
 
         <!-- Task Management -->
         <h2>Tasks in Folder: <span id="current-folder">None</span></h2>
-        <input type="text" id="task-title" placeholder="New Task Title">
+        <input type="text" class="input input-ghost w-full max-w-xs" id="task-title" placeholder="New Task Title">
         <button class="btn btn-neutral" onclick="addTask()">Add Task</button>
         <ul id="task-list"></ul>
     </div>

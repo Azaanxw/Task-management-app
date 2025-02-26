@@ -1,3 +1,3 @@
 -̶-̶ S̶h̶o̶w̶ a̶p̶p̶ i̶c̶o̶n̶s̶
--- Fix bugs with app icons
+-̶-̶ F̶i̶x̶ b̶u̶g̶s̶ w̶i̶t̶h̶ a̶p̶p̶ i̶c̶o̶n̶s̶
 -- Display time spent bar graph 

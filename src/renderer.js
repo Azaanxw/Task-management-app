@@ -36,8 +36,6 @@ function pauseTimer() {
     }
 }
 
-
-
 // Attach event listeners to buttons
 document.getElementById("start-timer").addEventListener("click", startTimer);
 document.getElementById("pause-timer").addEventListener("click", pauseTimer);
@@ -45,33 +43,53 @@ document.getElementById("pause-timer").addEventListener("click", pauseTimer);
 // Initialize the timer display
 updateTimerDisplay();
 
-
 // Track time spent on applications
-// Store application usage data
 const appUsageData = {};
 let lastActiveApp = null;
 let lastActiveTime = Date.now();
 
-// Utility function to format time in HH:MM:SS
+// List of applications to exclude from tracking
+const excludedApps = [
+    "Windows Shell Experience Host",
+    "SearchHost.exe",
+    "Electron",
+    "RuntimeBroker.exe",
+];
+
+// Function to format application names
+function formatAppName(appName) {
+    if (!appName) return "Unknown";
+
+    // Remove .exe extension
+    let formattedName = appName.replace(/\.exe$/i, "");
+
+    // Capitalize first letter
+    formattedName = formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
+
+    return formattedName;
+}
+
+// Function to format time in HH:MM:SS
 function formatTime(seconds) {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs
-        .toString()
-        .padStart(2, '0')}`;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 // Function to update the application usage list in the UI
 function renderAppUsage() {
     const appList = document.getElementById("app-usage-list");
     appList.innerHTML = Object.entries(appUsageData)
+        .filter(([app]) => !excludedApps.includes(app)) // Exclude unwanted apps
         .map(([app, data]) => {
             const { time, icon } = data;
+            const displayName = formatAppName(app);
+
             return `
-                <li style="display: flex; align-items: center; gap: 10px;">
-                    ${icon ? `<img src="${icon}" alt="${app}" width="24" height="24" onerror="this.style.display='none';">` : ''}
-                    <strong>${app}</strong>: ${formatTime(time)}
+                <li style="display: flex; justify-content: center; gap: 10px;">
+                    ${icon ? `<img src="${icon}" alt="${displayName}" width="24" height="24" onerror="this.style.display='none';">` : ''}
+                    <strong>${displayName}</strong>: ${formatTime(time)}
                 </li>
             `;
         })
@@ -86,9 +104,11 @@ async function trackApplicationUsage() {
     const activeApp = await window.appTracker.getActiveApplication();
     if (!activeApp) return;
 
-    const { name: appName, icon } = activeApp;
+    let { name: appName, icon } = activeApp;
 
-    if (!appName || appName === "Electron" || appName === "YourAppName") return;
+    if (!appName || excludedApps.includes(appName)) return; // Skip excluded apps
+
+    appName = formatAppName(appName); // Format the name
 
     // Updates time spent on the last active app
     if (lastActiveApp) {
@@ -114,10 +134,7 @@ async function trackApplicationUsage() {
 // Call `trackApplicationUsage` every second
 setInterval(trackApplicationUsage, 1000);
 
-
-
 // Adding tasks 
-// Folder and Task Data Structure
 const folders = {}; // Example: { "Work": [{ title: "Complete project", completed: false }] }
 let currentFolder = null; // Tracks the currently selected folder
 

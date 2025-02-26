@@ -1,7 +1,8 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain,nativeImage } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const mysql = require('mysql2');
-require('dotenv').config(); // Load .env variables
+require('dotenv').config();
 let mainWindow;
 
 app.on('ready', () => {
@@ -54,4 +55,29 @@ ipcMain.handle('db-query', async (event, queryString) => {
             }
         });
     });
+});
+
+
+// Function to extract and save the icon
+async function extractAndSaveIcon(filePath) {
+    try {
+        let icon = await app.getFileIcon(filePath, { size: 'large' }); 
+        let iconBuffer = icon.toPNG(); 
+
+        let iconFilename = path.basename(filePath, '.exe') + '.png'; // Names it after the exe
+        let iconPath = path.join(app.getPath('userData'), iconFilename); // Save it in userData folder
+
+        fs.writeFileSync(iconPath, iconBuffer); // Saves it as a file
+
+        return iconPath; 
+    } catch (error) {
+        console.error("Error extracting icon:", error);
+        return null;
+    }
+}
+
+
+// IPC handler to fetch and save app icon
+ipcMain.handle('get-app-icon', async (event, exePath) => {
+    return await extractAndSaveIcon(exePath);
 });

@@ -66,7 +66,15 @@ function formatTime(seconds) {
 function renderAppUsage() {
     const appList = document.getElementById("app-usage-list");
     appList.innerHTML = Object.entries(appUsageData)
-        .map(([app, time]) => `<li><strong>${app}</strong>: ${formatTime(time)}</li>`)
+        .map(([app, data]) => {
+            const { time, icon } = data;
+            return `
+                <li style="display: flex; align-items: center; gap: 10px;">
+                    ${icon ? `<img src="${icon}" alt="${app}" width="24" height="24" onerror="this.style.display='none';">` : ''}
+                    <strong>${app}</strong>: ${formatTime(time)}
+                </li>
+            `;
+        })
         .join("");
 }
 
@@ -76,23 +84,30 @@ async function trackApplicationUsage() {
 
     // Fetch the currently active application
     const activeApp = await window.appTracker.getActiveApplication();
-    const appName = activeApp ? activeApp.name : null;
+    if (!activeApp) return;
 
-    // Skip tracking for the Electron app or other apps to exclude
-    if (appName === "Electron" || appName === "YourAppName") {
-        return;
+    const { name: appName, icon } = activeApp;
+
+    if (!appName || appName === "Electron" || appName === "YourAppName") return;
+
+    // Updates time spent on the last active app
+    if (lastActiveApp) {
+        const elapsedTime = Math.round((now - lastActiveTime) / 1000);
+        if (!appUsageData[lastActiveApp]) {
+            appUsageData[lastActiveApp] = { time: 0, icon: null };
+        }
+        appUsageData[lastActiveApp].time += elapsedTime;
     }
 
-    // Update time spent on the last active app
-    if (lastActiveApp) {
-        const elapsedTime = Math.round((now - lastActiveTime) / 1000); // in seconds
-        appUsageData[lastActiveApp] = (appUsageData[lastActiveApp] || 0) + elapsedTime;
+    // Stores the icon only when first tracking the app
+    if (!appUsageData[appName]) {
+        appUsageData[appName] = { time: 0, icon: icon };
     }
 
     lastActiveApp = appName;
     lastActiveTime = now;
 
-    // Render the updated data
+    // Renders the updated data
     renderAppUsage();
 }
 

@@ -54,6 +54,7 @@ const excludedApps = [
     "SearchHost.exe",
     "Electron",
     "RuntimeBroker.exe",
+    "Application Frame Host"
 ];
 
 // Function to format application names
@@ -108,7 +109,7 @@ async function trackApplicationUsage() {
 
     if (!appName || excludedApps.includes(appName)) return; // Skip excluded apps
 
-    appName = formatAppName(appName); // Format the name
+    appName = formatAppName(appName); 
 
     // Updates time spent on the last active app
     if (lastActiveApp) {
@@ -126,9 +127,8 @@ async function trackApplicationUsage() {
 
     lastActiveApp = appName;
     lastActiveTime = now;
-
-    // Renders the updated data
     renderAppUsage();
+    updateChart(); 
 }
 
 // Call `trackApplicationUsage` every second
@@ -224,3 +224,96 @@ function selectFolder(folder) {
 
 // Initial Render
 renderFolders();
+
+// Graph for time spent on each application (bar chart)
+let appUsageChart = null; // Stores the chart instance
+
+function updateChart() {
+    const ctx = document.getElementById('appUsageChart').getContext('2d');
+
+    // Gets sorted application data (Top 5 only)
+    const sortedApps = Object.entries(appUsageData)
+        .sort((a, b) => b[1].time - a[1].time) // Sort by highest time spent
+        .slice(0, 5); 
+
+    const labels = sortedApps.map(([app]) => app);
+    const times = sortedApps.map(([_, data]) => data.time);
+    const maxTime = Math.max(...times, 10); // Ensures minimum value for y-axis
+
+    if (appUsageChart) {
+        // Smoothly updates the chart with up anim
+        appUsageChart.data.labels = labels;
+        appUsageChart.data.datasets[0].data = times;
+        appUsageChart.options.scales.y.max = maxTime;
+        appUsageChart.update();
+        return;
+    }
+
+    // Create a new bar chart
+    appUsageChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Time Spent (seconds)',
+                data: times,
+                backgroundColor: 'rgba(0, 102, 255, 0.8)',
+                borderColor: 'rgba(0, 85, 204, 1)', 
+                borderWidth: 1,
+                borderRadius: 10,
+                barThickness: 100,
+                maxBarThickness: 120
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 600, 
+                easing: 'easeOutExpo' 
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: maxTime,
+                    ticks: {
+                        font: {
+                            size: 14,
+                            weight: "bold", 
+                            family: 'Inter, sans-serif'
+                        },
+                        color: '#A0AEC0'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 16,
+                            weight: "bold", 
+                            family: 'Inter, sans-serif'
+                        },
+                        color: '#A0AEC0'
+                    },
+                    grid: {
+                        display: false
+                    },
+                    barPercentage: 0.85, 
+                    categoryPercentage: 0.9
+                }
+            },
+            plugins: {
+                legend: { display: false }, 
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    bodyFont: { family: 'Inter, sans-serif', size: 14 },
+                    padding: 10,
+                    borderRadius: 8
+                }
+            }
+        }
+    });
+}

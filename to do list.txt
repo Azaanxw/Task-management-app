@@ -1,3 +1,3 @@
--̶-̶ S̶h̶o̶w̶ a̶p̶p̶ i̶c̶o̶n̶s̶
--̶-̶ F̶i̶x̶ b̶u̶g̶s̶ w̶i̶t̶h̶ a̶p̶p̶ i̶c̶o̶n̶s̶
--- Display time spent bar graph 
+-̶-̶ D̶i̶s̶p̶l̶a̶y̶ t̶i̶m̶e̶ s̶p̶e̶n̶t̶ b̶a̶r̶ g̶r̶a̶p̶h̶ 
+-- Scroll down folder with tasks  
+-- Timer widget GUI

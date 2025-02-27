@@ -29,6 +29,12 @@
         </div>
     </div>
     <h2> Application tracker</h2>
+    <!-- Bar chart of top 6 applications used displayed here -->
+    <div id="chart-container" class="w-full max-w-4xl h-[30rem] mx-auto p-6 bg-base-200 rounded-xl shadow-lg flex items-center justify-center">
+        <canvas id="appUsageChart"></canvas>
+    </div>
+
+    <!-- Container showing all activate applications -->
     <div class="container">
         <h2>Currently Active Applications</h2>
         <ul id="app-usage-list">
@@ -50,5 +56,6 @@
         <ul id="task-list"></ul>
     </div>
     <script src="renderer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>

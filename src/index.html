@@ -58,28 +58,12 @@
             <!-- Tracked applications and their times will be displayed here -->
         </ul>
     </div>
-    
-    <h2> Tasks </h2>
-    <div class="container">
-        <!-- Folder Management -->
-        <h2>Folders</h2>
-        <input type="text" class="input input-ghost w-full max-w-xs" id="folder-name" placeholder="New Folder Name">
-        <button class="btn btn-neutral" onclick="addFolder()">Add Folder</button>
-        <ul id="folder-list"></ul>
-
-        <!-- Task Management -->
-        <h2>Tasks in Folder: <span id="current-folder">None</span></h2>
-        <input type="text" class="input input-ghost w-full max-w-xs" id="task-title" placeholder="New Task Title">
-        <button class="btn btn-neutral" onclick="addTask()">Add Task</button>
-        <ul id="task-list"></ul>
+    <input type="text" class="input input-ghost w-full max-w-xs" id="folder-name" placeholder="New Folder Name">
+    <button class="btn btn-neutral mt-2" onclick="addFolder()">Add Folder</button>
+    <!-- Folders Container -->
+    <div id="folders-container" class="mt-4 space-y-2">
+        <!-- Dynamically added folders will appear here -->
     </div>
-    <details class="dropdown">
-      <summary class="btn m-1">Folder</summary>
-      <ul class="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-        <li><a>Task 1</a></li>
-        <li><a>Task 2</a></li>
-      </ul>
-    </details>
     <script src="renderer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>

@@ -140,18 +140,53 @@ let currentFolder = null; // Tracks the currently selected folder
 
 // Function to render folder list
 function renderFolders() {
-    const folderList = document.getElementById("folder-list");
-    folderList.innerHTML = Object.keys(folders)
-        .map(
-            (folder) => `
-        <li>
-            <span>${folder}</span>
-            <button onclick="selectFolder('${folder}')">Open</button>
-        </li>
-        `
-        )
-        .join("");
+    const folderContainer = document.getElementById("folders-container");
+
+    // Stores which folders are open
+    const openFolders = {};
+    document.querySelectorAll(".collapse[open]").forEach((el) => {
+        openFolders[el.getAttribute("data-folder")] = true;
+    });
+
+    folderContainer.innerHTML = Object.keys(folders)
+        .map(folder => `
+        <details class="collapse bg-base-200 rounded-lg shadow-md" data-folder="${folder}" ${openFolders[folder] ? "open" : ""}>
+            <summary class="collapse-title text-lg font-semibold cursor-pointer">
+                ${folder}
+            </summary>
+            <div class="collapse-content">
+                <ul class="space-y-2 mt-2">
+                    ${folders[folder].map((task, index) => `
+                        <li class="flex justify-between items-center bg-base-100 p-2 rounded-lg shadow-sm">
+                            <span class="${task.completed ? 'line-through text-gray-400' : ''}">
+                                ${task.title}
+                            </span>
+                            <button class="btn btn-xs ${task.completed ? 'btn-warning' : 'btn-success'} task-btn" 
+                                data-folder="${folder}" data-index="${index}">
+                                ${task.completed ? "Undo" : "Complete"}
+                            </button>
+                        </li>
+                    `).join("")}
+                </ul>
+                <div class="mt-2">
+                    <input type="text" class="input input-xs input-bordered w-full" id="task-input-${folder}" placeholder="New Task">
+                    <button class="btn btn-xs btn-neutral mt-1 w-full" onclick="addTask('${folder}')">Add Task</button>
+                </div>
+            </div>
+        </details>
+    `).join("");
+
+    // Prevents collapse from closing when clicking task buttons
+    document.querySelectorAll(".task-btn").forEach(button => {
+        button.addEventListener("click", (event) => {
+            event.stopPropagation(); // Prevents collapse from closing
+            const folder = event.target.getAttribute("data-folder");
+            const index = event.target.getAttribute("data-index");
+            toggleTaskCompletion(folder, index);
+        });
+    });
 }
+
 
 // Function to render tasks in the current folder
 function renderTasks() {
@@ -194,25 +229,23 @@ function addFolder() {
 }
 
 // Function to add a task to the current folder
-function addTask() {
-    if (!currentFolder) {
-        alert("Please select a folder first.");
-        return;
-    }
-    const taskTitle = document.getElementById("task-title").value.trim();
+function addTask(folder) {
+    const taskInput = document.getElementById(`task-input-${folder}`);
+    const taskTitle = taskInput.value.trim();
     if (!taskTitle) {
         alert("Task title cannot be empty.");
         return;
     }
-    folders[currentFolder].push({ title: taskTitle, completed: false });
-    document.getElementById("task-title").value = ""; // Clear input
-    renderTasks();
+    folders[folder].push({ title: taskTitle, completed: false });
+    taskInput.value = ""; 
+    renderFolders();
 }
+
 
 // Function to toggle task completion
 function toggleTaskCompletion(folder, taskIndex) {
     folders[folder][taskIndex].completed = !folders[folder][taskIndex].completed;
-    renderTasks();
+    renderFolders();
 }
 
 // Function to select a folder

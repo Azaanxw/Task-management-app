@@ -58,12 +58,20 @@
             <!-- Tracked applications and their times will be displayed here -->
         </ul>
     </div>
-    <input type="text" class="input input-ghost w-full max-w-xs" id="folder-name" placeholder="New Folder Name">
-    <button class="btn btn-neutral mt-2" onclick="addFolder()">Add Folder</button>
-    <!-- Folders Container -->
-    <div id="folders-container" class="mt-4 space-y-2">
-        <!-- Dynamically added folders will appear here -->
+    <div class="flex justify-center mt-6">
+        <div class="w-full max-w-lg bg-base-200 p-4 rounded-lg shadow-lg">
+            <h2 class="text-lg font-bold text-center">Folders</h2>
+            <div class="flex space-x-2 mt-2">
+                <input type="text" class="input input-ghost w-full" id="folder-name" placeholder="New Folder Name">
+                <button class="btn btn-neutral" onclick="addFolder()">Add</button>
+            </div>
+              <!-- Folders Container -->
+            <div id="folders-container" class="mt-4 space-y-2">
+                <!-- Dynamically added folders will appear here -->
+            </div>
+        </div>
     </div>
+    
     <script src="renderer.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>

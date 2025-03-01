@@ -149,32 +149,42 @@ function renderFolders() {
     });
 
     folderContainer.innerHTML = Object.keys(folders)
-        .map(folder => `
-        <details class="collapse bg-base-200 rounded-lg shadow-md" data-folder="${folder}" ${openFolders[folder] ? "open" : ""}>
-            <summary class="collapse-title text-lg font-semibold cursor-pointer">
-                ${folder}
-            </summary>
-            <div class="collapse-content">
-                <ul class="space-y-2 mt-2">
-                    ${folders[folder].map((task, index) => `
-                        <li class="flex justify-between items-center bg-base-100 p-2 rounded-lg shadow-sm">
-                            <span class="${task.completed ? 'line-through text-gray-400' : ''}">
-                                ${task.title}
-                            </span>
-                            <button class="btn btn-xs ${task.completed ? 'btn-warning' : 'btn-success'} task-btn" 
-                                data-folder="${folder}" data-index="${index}">
-                                ${task.completed ? "Undo" : "Complete"}
-                            </button>
-                        </li>
-                    `).join("")}
-                </ul>
-                <div class="mt-2">
-                    <input type="text" class="input input-xs input-bordered w-full" id="task-input-${folder}" placeholder="New Task">
-                    <button class="btn btn-xs btn-neutral mt-1 w-full" onclick="addTask('${folder}')">Add Task</button>
+        .map(folder => {
+            // Auto capitalize folder name
+            const formattedFolder = folder.charAt(0).toUpperCase() + folder.slice(1).toLowerCase();
+
+            return `
+            <details class="collapse bg-base-100 rounded-lg shadow-md p-3" data-folder="${folder}" ${openFolders[folder] ? "open" : ""}>
+                <summary class="collapse-title text-lg font-semibold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;" class="inline-block flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M3 7h18M3 7l2-2h5l2 2h8M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10H5z"/>
+                    </svg>
+                    <span class="text-base relative top-[1px]">${formattedFolder}</span>
+                </summary>
+                <div class="collapse-content mt-2">
+                    <ul class="space-y-2">
+                        ${folders[folder].map((task, index) => `
+                            <li class="flex justify-between items-center bg-base-300 p-2 rounded-lg shadow-sm">
+                                <span class="${task.completed ? 'line-through text-gray-400' : ''}">
+                                    ${task.title}
+                                </span>
+                                <button class="btn btn-xs ${task.completed ? 'btn-warning' : 'btn-success'} task-btn" 
+                                    data-folder="${folder}" data-index="${index}">
+                                    ${task.completed ? "Undo" : "Complete"}
+                                </button>
+                            </li>
+                        `).join("")}
+                    </ul>
+                    <div class="mt-2">
+                        <input type="text" class="input input-sm input-bordered w-full" id="task-input-${folder}" placeholder="New Task">
+                        <button class="btn btn-sm btn-neutral mt-2 w-full" onclick="addTask('${folder}')">Add Task</button>
+                    </div>
                 </div>
-            </div>
-        </details>
-    `).join("");
+            </details>
+            `;
+        })
+        .join("");
 
     // Prevents collapse from closing when clicking task buttons
     document.querySelectorAll(".task-btn").forEach(button => {

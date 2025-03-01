@@ -81,3 +81,15 @@ async function extractAndSaveIcon(filePath) {
 ipcMain.handle('get-app-icon', async (event, exePath) => {
     return await extractAndSaveIcon(exePath);
 });
+
+
+const { exec } = require("child_process");
+
+// Starts Tailwind CLI in watch mode automatically
+exec("npm run build.css", (err, stdout, stderr) => {
+    if (err) {
+        console.error(`Tailwind Watch Error: ${stderr}`);
+        return;
+    }
+    console.log(`Tailwind Watch Running: ${stdout}`);
+});

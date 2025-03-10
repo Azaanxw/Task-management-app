@@ -1,28 +1,67 @@
 let timer = null;
-let timeRemaining = 25 * 60; // 25 minutes in seconds
+let timeRemaining = 25 * 60; // Default 25 minutes in seconds
 let isPaused = false;
-
+let totalFocusTime = 0; // Tracks total focused time
+let focusTime = 25 * 60; // Default focus time
+let breakTime = 5 * 60; // Default break time
+let isBreak = false;
+let lastFocusUpdate = 0;
+let focusChart = null;
+// Tracking Daily focus time
+let weeklyFocusData = {
+    0: 0,  // Sunday
+    1: 0,  // Monday
+    2: 0,  // Tuesday
+    3: 0,  // Wednesday
+    4: 0,  // Thursday
+    5: 0,  // Friday
+    6: 0   // Saturday
+  };
+  
 // Function to update the timer display
 function updateTimerDisplay() {
     const minutes = Math.floor(timeRemaining / 60);
     const seconds = timeRemaining % 60;
     const timerDisplay = document.getElementById("timer-display");
     timerDisplay.innerText = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    updateCircleProgress();
+    updateFocusTimeDisplay(); // Update focus time continuously
 }
 
 // Function to start the timer
 function startTimer() {
     if (timer) return; // Prevent starting a new timer if already running
-
     isPaused = false;
+    lastFocusUpdate = Date.now();
     timer = setInterval(() => {
         if (timeRemaining > 0) {
             timeRemaining--;
+            if (!isBreak) {
+                const now = Date.now();
+                const delta = (now - lastFocusUpdate) / 1000; // Calculates time passed in seconds
+                totalFocusTime += delta; // Accumulate overall focus time
+                
+                // Updates weekly focus data for the current day
+                const currentDay = new Date().getDay();
+                weeklyFocusData[currentDay] += delta;
+                
+                lastFocusUpdate = now;
+                updateFocusChart(); // Refreshes the weekly focus chart with new data
+            }
             updateTimerDisplay();
         } else {
             clearInterval(timer);
             timer = null;
-            alert("Time's up!");
+            if (!isBreak) {
+                alert("Focus session complete! Time for a break.");
+                isBreak = true;
+                timeRemaining = breakTime;
+            } else {
+                alert("Break is over! Time to focus.");
+                isBreak = false;
+                timeRemaining = focusTime;
+            }
+            startTimer();
         }
     }, 1000);
 }
@@ -30,19 +69,71 @@ function startTimer() {
 // Function to pause the timer
 function pauseTimer() {
     if (timer && !isPaused) {
-        clearInterval(timer); // Stop the interval
+        clearInterval(timer);
         timer = null;
-        isPaused = true; // Mark as paused
+        isPaused = true;
+        if (!isBreak) {
+            totalFocusTime += (Date.now() - lastFocusUpdate) / 1000; // Ensures focus time updates on pause
+            updateFocusTimeDisplay();
+        }
     }
+}
+
+// Function to reset the timer
+function resetTimer() {
+    clearInterval(timer);
+    timer = null;
+    isPaused = false;
+    isBreak = false;
+    focusTime = parseInt(document.getElementById("focus-input").value) * 60;
+    breakTime = parseInt(document.getElementById("break-input").value) * 60;
+    timeRemaining = focusTime;
+    totalFocusTime = 0; // Reset total focus time
+    updateTimerDisplay();
+    updateFocusTimeDisplay();
+}
+
+// Function to update the total focus time display
+function updateFocusTimeDisplay() {
+    const totalFocusDisplay = document.getElementById("total-focus-time");
+    const hours = Math.floor(totalFocusTime / 3600);
+    const minutes = Math.floor((totalFocusTime % 3600) / 60);
+    totalFocusDisplay.innerText = `Total Focus Time: ${hours}h ${minutes}m`;
+}
+
+// Function to update circular progress
+function updateCircleProgress() {
+    const progressCircle = document.getElementById("progress-circle");
+    const radius = progressCircle.r.baseVal.value;
+    const circumference = 2 * Math.PI * radius;
+    const progress = 1 - (timeRemaining / (isBreak ? breakTime : focusTime)); // Flip progress calculation for clockwise motion
+    progressCircle.style.strokeDasharray = `${circumference}`;
+    progressCircle.style.strokeDashoffset = `${circumference * progress}`;
+    progressCircle.style.transform = "rotate(270deg) scale(1, -1)"; // Ensures proper clockwise motion starting from the top
+    progressCircle.style.transformOrigin = "center";
+    progressCircle.style.stroke = isBreak ? "green" : "blue"; // Change color based on session type
+    progressCircle.style.display = "block"; // Ensure proper centering
+    progressCircle.style.margin = "0 auto";
 }
 
 // Attach event listeners to buttons
 document.getElementById("start-timer").addEventListener("click", startTimer);
 document.getElementById("pause-timer").addEventListener("click", pauseTimer);
+document.getElementById("reset-timer").addEventListener("click", resetTimer);
+
+document.getElementById("focus-input").addEventListener("change", () => {
+    focusTime = parseInt(document.getElementById("focus-input").value) * 60;
+    timeRemaining = focusTime;
+    updateTimerDisplay();
+});
+
+document.getElementById("break-input").addEventListener("change", () => {
+    breakTime = parseInt(document.getElementById("break-input").value) * 60;
+});
 
 // Initialize the timer display
 updateTimerDisplay();
-
+updateFocusTimeDisplay();
 // Track time spent on applications
 const appUsageData = {};
 let lastActiveApp = null;
@@ -54,7 +145,8 @@ const excludedApps = [
     "SearchHost.exe",
     "Electron",
     "RuntimeBroker.exe",
-    "Application Frame Host"
+    "Application Frame Host",
+    "LockApp.exe"
 ];
 
 // Function to format application names
@@ -359,4 +451,61 @@ function updateChart() {
             }
         }
     });
+}
+
+function updateFocusChart() {
+const ctx = document.getElementById('focusChart').getContext('2d');
+const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const focusTimes = labels.map((_, index) => weeklyFocusData[index]);
+
+const focusTimesInMinutes = focusTimes.map(seconds => Math.round(seconds / 60));
+
+if (focusChart) {
+// Updates existing chart data
+focusChart.data.datasets[0].data = focusTimesInMinutes;
+focusChart.update();
+} else {
+// Creates the chart for the first time
+focusChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+    labels: labels,
+    datasets: [{
+        label: 'Focus Time (minutes)',
+        data: focusTimesInMinutes,
+        backgroundColor: 'rgba(0, 102, 255, 0.8)',
+        borderColor: 'rgba(0, 85, 204, 1)',
+        borderWidth: 1,
+        borderRadius: 10,
+        barThickness: 40,
+    }]
+    },
+    options: {
+    scales: {
+        y: {
+        beginAtZero: true,
+        ticks: {
+            // Displays the y-axis in minutes
+            callback: function(value) {
+            return value + ' min';
+            }
+        }
+        }
+    },
+    plugins: {
+        tooltip: {
+        callbacks: {
+            label: function(context) {
+            return context.parsed.y + ' min';
+            }
+        }
+        },
+        legend: {
+        display: false
+        }
+    }
+    }
+});
+}
 }

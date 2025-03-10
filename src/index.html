@@ -1,78 +1,110 @@
 <!DOCTYPE html>
 <html  data-theme="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="./output.css" rel="stylesheet">
-    <title>Task Management App</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="./output.css" rel="stylesheet">
+  <title>Task Management App</title>
 </head>
 <body>
-    <h1 class="text-4xl font-extrabold text-center rounded-lg p-2">
-        Task Management App 🎉
-    </h1>
+  <h1 class="text-4xl font-extrabold text-center rounded-lg p-2">
+    Task Management App 🎉
+  </h1>
+  
+  <!-- Dark/light mode widget -->
+  <div class="container">
+    <label class="swap swap-rotate">
+      <!-- this hidden checkbox controls the state -->
+      <input type="checkbox" class="theme-controller" value="light" />
     
-    <!-- Dark/light mode widget -->
-     <div class="container">
-        <label class="swap swap-rotate">
-            <!-- this hidden checkbox controls the state -->
-            <input type="checkbox" class="theme-controller" value="light" />
-          
-            <!-- sun icon -->
-            <svg
-              class="swap-off h-10 w-10 fill-current"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24">
-              <path
-                d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z" />
-            </svg>
-          
-            <!-- moon icon -->
-            <svg
-              class="swap-on h-10 w-10 fill-current"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24">
-              <path
-                d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z" />
-            </svg>
-          </label>
-    </div>
-    <div class="container">
-        <!-- Timer Widget -->
-        <div class="timer-widget">
-            <h2>Focus Timer</h2>
-            <div id="timer-display">25:00</div>
-            <button class="btn btn-neutral" id="start-timer">Start Timer</button>
-            <button class="btn btn-neutral" id="pause-timer">Pause Timer</button>
-        </div>
-    </div>
-    <h2> Application tracker</h2>
-    <!-- Bar chart of top 6 applications used displayed here -->
-    <div id="chart-container" class="w-full max-w-4xl h-[30rem] mx-auto p-6 bg-base-200 rounded-xl shadow-lg flex items-center justify-center">
-        <canvas id="appUsageChart"></canvas>
-    </div>
+      <!-- sun icon -->
+      <svg
+        class="swap-off h-10 w-10 fill-current"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24">
+        <path
+          d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z" />
+      </svg>
+    
+      <!-- moon icon -->
+      <svg
+        class="swap-on h-10 w-10 fill-current"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24">
+        <path
+          d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z" />
+      </svg>
+    </label>
+  </div>
+  <!-- Timer Widget and Weekly Focus Chart Container -->
+  <div class="flex flex-col md:flex-row justify-center items-start gap-6">
+    <!-- Timer Widget -->
+    <div class="timer-container text-center bg-base-200 p-6 rounded-lg shadow-xl">
+      <h2 class="text-3xl font-bold mb-4">Focus Timer</h2>
 
-    <!-- Container showing all activate applications -->
-    <div class="container">
-        <h2>Currently Active Applications</h2>
-        <ul id="app-usage-list">
-            <!-- Tracked applications and their times will be displayed here -->
-        </ul>
-    </div>
-    <div class="flex justify-center mt-6">
-        <div class="w-full max-w-lg bg-base-200 p-4 rounded-lg shadow-lg">
-            <h2 class="text-lg font-bold text-center">Folders</h2>
-            <div class="flex space-x-2 mt-2">
-                <input type="text" class="input input-ghost w-full" id="folder-name" placeholder="New Folder Name">
-                <button class="btn btn-neutral" onclick="addFolder()">Add</button>
-            </div>
-              <!-- Folders Container -->
-            <div id="folders-container" class="mt-4 space-y-2">
-                <!-- Dynamically added folders will appear here -->
-            </div>
+      <div class="flex justify-center space-x-4 mb-4">
+        <div>
+          <label class="block font-semibold">Focus Time (mins)</label>
+          <input type="number" id="focus-input" min="1" value="25" class="input input-bordered w-20 text-center" />
         </div>
+        <div>
+          <label class="block font-semibold">Break Time (mins)</label>
+          <input type="number" id="break-input" min="1" value="5" class="input input-bordered w-20 text-center" />
+        </div>
+      </div>
+
+      <!-- Circular Progress Timer -->
+      <div class="flex justify-center">
+        <svg class="mt-4" width="150" height="150">
+          <circle cx="75" cy="75" r="60" stroke="gray" stroke-width="5" fill="none" />
+          <circle id="progress-circle" cx="75" cy="75" r="60" stroke="blue" stroke-width="5" fill="none" stroke-dasharray="377" stroke-dashoffset="0" />
+        </svg>
+      </div>
+
+      <div id="timer-display" class="text-4xl font-bold mt-4">25:00</div>
+
+      <div class="flex justify-between w-full mt-4">
+        <button class="btn btn-success flex-1 mx-2" id="start-timer">Start</button>
+        <button class="btn btn-primary flex-1 mx-2" id="pause-timer">Pause</button>
+        <button class="btn btn-error flex-1 mx-2" id="reset-timer">Reset</button>
+      </div>
+
+      <p id="total-focus-time" class="text-lg mt-4">Total Focus Time: 0h 0m</p>
     </div>
-    
-    <script src="renderer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Weekly Focus Chart -->
+    <div id="focus-chart-container" class="w-full md:w-1/3 h-[20rem] bg-base-200 p-6 rounded-xl shadow-lg flex items-center justify-center">
+      <canvas id="focusChart"></canvas>
+    </div>
+  </div>
+  
+  <h2 class="py-5 text-lg font-bold">Application Tracker</h2>
+  <!-- Bar chart of top 6 applications used displayed here -->
+  <div id="chart-container" class="w-full max-w-4xl h-[30rem] mx-auto p-6 bg-base-200 rounded-xl shadow-lg flex items-center justify-center">
+    <canvas id="appUsageChart"></canvas>
+  </div>
+
+  <!-- Container showing all applications used -->
+  <div class="container">
+    <h2>Currently Active Applications</h2>
+    <ul id="app-usage-list">
+      <!-- Tracked applications and their times will be displayed here -->
+    </ul>
+  </div>  
+  <div class="flex justify-center mt-6">
+    <div class="w-full max-w-lg bg-base-200 p-4 rounded-lg shadow-lg">
+      <h2 class="text-lg font-bold text-center">Folders</h2>
+      <div class="flex space-x-2 mt-2">
+        <input type="text" class="input input-ghost w-full" id="folder-name" placeholder="New Folder Name">
+        <button class="btn btn-neutral" onclick="addFolder()">Add</button>
+      </div>
+      <!-- Folders Container -->
+      <div id="folders-container" class="mt-4 space-y-2">
+        <!-- Dynamically added folders will appear here -->
+      </div>
+    </div>
+  </div>
+  
+  <script src="renderer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>

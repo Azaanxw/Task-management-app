@@ -6,7 +6,6 @@ let focusTime = 25 * 60; // Default focus time
 let breakTime = 5 * 60; // Default break time
 let isBreak = false;
 let lastFocusUpdate = 0;
-<<<<<<< HEAD
 let focusChart = null;
 // Tracking Daily focus time
 let weeklyFocusData = {
@@ -19,8 +18,6 @@ let weeklyFocusData = {
     6: 0   // Saturday
   };
   
-=======
->>>>>>> 0e868d7eeef4d0df2fae1a8c63380c20e79f4efd
 // Function to update the timer display
 function updateTimerDisplay() {
     const minutes = Math.floor(timeRemaining / 60);
@@ -34,17 +31,12 @@ function updateTimerDisplay() {
 // Function to start the timer
 function startTimer() {
     if (timer) return; // Prevent starting a new timer if already running
-<<<<<<< HEAD
-=======
-    
->>>>>>> 0e868d7eeef4d0df2fae1a8c63380c20e79f4efd
     isPaused = false;
     lastFocusUpdate = Date.now();
     timer = setInterval(() => {
         if (timeRemaining > 0) {
             timeRemaining--;
             if (!isBreak) {
-<<<<<<< HEAD
                 const now = Date.now();
                 const delta = (now - lastFocusUpdate) / 1000; // Calculates time passed in seconds
                 totalFocusTime += delta; // Accumulate overall focus time
@@ -55,10 +47,6 @@ function startTimer() {
                 
                 lastFocusUpdate = now;
                 updateFocusChart(); // Refreshes the weekly focus chart with new data
-=======
-                totalFocusTime += (Date.now() - lastFocusUpdate) / 1000; // Accumulates time since last update
-                lastFocusUpdate = Date.now();
->>>>>>> 0e868d7eeef4d0df2fae1a8c63380c20e79f4efd
             }
             updateTimerDisplay();
         } else {

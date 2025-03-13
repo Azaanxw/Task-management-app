@@ -1,7 +1,11 @@
 -̶-̶ D̶i̶s̶p̶l̶a̶y̶ t̶i̶m̶e̶ s̶p̶e̶n̶t̶ b̶a̶r̶ g̶r̶a̶p̶h̶ 
 -̶-̶ S̶c̶r̶o̶l̶l̶ d̶o̶w̶n̶ f̶o̶l̶d̶e̶r̶ w̶i̶t̶h̶ t̶a̶s̶k̶s̶  
 -̶-̶ T̶i̶m̶e̶r̶ w̶i̶d̶g̶e̶t̶ G̶U̶I̶
+<<<<<<< HEAD
 -̶-̶ T̶i̶m̶e̶l̶i̶n̶e̶ f̶o̶c̶u̶s̶e̶d̶ p̶e̶r̶ w̶e̶e̶k̶ c̶h̶a̶r̶t̶
+=======
+-- Timeline focused per week chart
+>>>>>>> 0e868d7eeef4d0df2fae1a8c63380c20e79f4efd
 -- Date and priority for task 
 -- Level system 
 -- Fix main layout

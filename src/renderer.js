@@ -7,6 +7,7 @@ let breakTime = 5 * 60; // Default break time
 let isBreak = false;
 let lastFocusUpdate = 0;
 let focusChart = null;
+
 // Tracking Daily focus time
 let weeklyFocusData = {
     0: 0,  // Sunday
@@ -17,7 +18,7 @@ let weeklyFocusData = {
     5: 0,  // Friday
     6: 0   // Saturday
   };
-  
+
 // Function to update the timer display
 function updateTimerDisplay() {
     const minutes = Math.floor(timeRemaining / 60);
@@ -40,11 +41,11 @@ function startTimer() {
                 const now = Date.now();
                 const delta = (now - lastFocusUpdate) / 1000; // Calculates time passed in seconds
                 totalFocusTime += delta; // Accumulate overall focus time
-                
+
                 // Updates weekly focus data for the current day
                 const currentDay = new Date().getDay();
                 weeklyFocusData[currentDay] += delta;
-                
+
                 lastFocusUpdate = now;
                 updateFocusChart(); // Refreshes the weekly focus chart with new data
             }
@@ -201,7 +202,7 @@ async function trackApplicationUsage() {
 
     if (!appName || excludedApps.includes(appName)) return; // Skip excluded apps
 
-    appName = formatAppName(appName); 
+    appName = formatAppName(appName);
 
     // Updates time spent on the last active app
     if (lastActiveApp) {
@@ -509,3 +510,36 @@ focusChart = new Chart(ctx, {
 });
 }
 }
+
+// Renders and shows the list of distracting apps 
+function renderDistractingApps(appList) {
+    const listElement = document.getElementById('distracting-app-list');
+    listElement.innerHTML = appList.map(app => `<li>${app}</li>`).join('');
+  }
+  
+  // Fetches the global data
+  window.globalDataAPI.getGlobalData().then(data => {
+    renderDistractingApps(data.distractingApps);
+  });
+  
+  // Listens for updates broadcast from the main process
+  window.globalDataAPI.onGlobalDataUpdate((data) => {
+    renderDistractingApps(data.distractingApps);
+  });
+  
+  // Function to add a distracting ap by user
+  async function addDistractingApp() {
+    const input = document.getElementById('distracting-app-input');
+    const appName = input.value.trim();
+    if (appName) {
+      const updatedData = await window.globalDataAPI.addDistractingApp(appName);
+      // Render the updated list
+      renderDistractingApps(updatedData.distractingApps);
+      input.value = '';
+    } else {
+      alert('App already listed or invalid input.');
+    }
+  }
+
+// Initial render
+renderDistractingApps();

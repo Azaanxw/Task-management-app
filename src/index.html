@@ -95,27 +95,47 @@
         <!-- Tracked applications and their times will be displayed here -->
       </ul>
     </section>
+     <!-- Distracting Applications Management -->
+     <section class="mb-8 bg-base-200 p-6 rounded-lg shadow-xl">
+      <h2 class="text-xl font-bold mb-4">Distracting Applications</h2>
+      <div class="flex gap-2">
+        <input id="distracting-app-input" type="text" placeholder="Enter distracting apps here" class="input input-bordered w-full" />
+        <button onclick="addDistractingApp()" class="btn btn-neutral">Add</button>
+      </div>
+      <ul id="distracting-app-list" class="mt-4 list-disc list-inside">
+        <!-- Current distracting apps will be dynamically listed here -->
+      </ul>
+    </section>
+
   </div>
 
   <!-- Using a ResizeObserver to update folder-wrapper height when leftColumn changes size (weekly focused chart updates initially) -->
   <script>
     window.addEventListener("load", () => {
-      const leftColumn = document.getElementById("left-column");
-      const folderWrapper = document.getElementById("folder-wrapper");
-      function updateFolderHeight() {
-        folderWrapper.style.height = leftColumn.offsetHeight + "px";
-      }
-      updateFolderHeight();
-      // using ResizeObserver to monitor changes in leftColumn
-      if (window.ResizeObserver) {
-        const observer = new ResizeObserver(() => {
-          updateFolderHeight();
-        });
-        observer.observe(leftColumn);
-      }
-      // Updates on window resize
-      window.addEventListener("resize", updateFolderHeight);
-    });
+    const leftColumn = document.getElementById("left-column");
+    const folderWrapper = document.getElementById("folder-wrapper");
+
+    let resizePending = false;
+
+    function updateFolderHeight() {
+      folderWrapper.style.height = leftColumn.offsetHeight + "px";
+    }
+
+    function handleResize() {
+      requestAnimationFrame(updateFolderHeight);
+    }
+
+    if (window.ResizeObserver) {
+      const observer = new ResizeObserver(() => {
+        handleResize();
+      });
+      observer.observe(leftColumn);
+    }
+
+    window.addEventListener("resize", handleResize);
+
+    updateFolderHeight();
+  });
   </script>
   <script src="renderer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

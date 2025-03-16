@@ -3,7 +3,8 @@
 -̶-̶ T̶i̶m̶e̶r̶ w̶i̶d̶g̶e̶t̶ G̶U̶I̶
 -̶-̶ T̶i̶m̶e̶l̶i̶n̶e̶ f̶o̶c̶u̶s̶e̶d̶ p̶e̶r̶ w̶e̶e̶k̶ c̶h̶a̶r̶t̶
 -̶-̶ F̶i̶x̶ m̶a̶i̶n̶ l̶a̶y̶o̶u̶t̶
--- Fix weekly chart not being updated accurately
+-̶-̶ F̶i̶x̶ w̶e̶e̶k̶l̶y̶ c̶h̶a̶r̶t̶ n̶o̶t̶ b̶e̶i̶n̶g̶ u̶p̶d̶a̶t̶e̶d̶ a̶c̶c̶u̶r̶a̶t̶e̶l̶y̶
 -- Date and priority for task 
 -- Level system 
--- Overlay on other applications
+-̶-̶ O̶v̶e̶r̶l̶a̶y̶ o̶n̶ o̶t̶h̶e̶r̶ a̶p̶p̶l̶i̶c̶a̶t̶i̶o̶n̶s̶ 
+-- Functionality for overlay buttons + timer 

@@ -11,6 +11,7 @@
     <!-- Title -->
     <header class="w-full flex flex-col items-center mb-6">
       <h1 class="text-4xl font-extrabold text-center">Task Management App 🎉</h1>
+      <div class="card bg-base-200 shadow-xl p-4 my-4"> <div class="card-body"> <h2 id="level-badge" class="card-title">Level 1</h2> <progress id="exp-progress" class="progress progress-primary" value="0" max="100"></progress> </div> </div>
       <div class="mt-2">
         <label class="swap swap-rotate">
           <input type="checkbox" class="theme-controller" value="light" />
@@ -137,7 +138,10 @@
     updateFolderHeight();
   });
   </script>
+
   <script src="renderer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
 </body>
 </html>

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const mysql = require('mysql2');
@@ -102,6 +102,7 @@ async function updateOverlayBounds(win) {
 
 // Initialize windows after app is ready
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null); // Hides menu bar 
   // Main window
   mainWindow = new BrowserWindow({
     width: 800,

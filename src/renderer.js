@@ -12,6 +12,41 @@ let sessionXpAwarded = false;
 
 /*
 --------------------------
+NAVIAGATION SECTION 
+--------------------------
+*/
+
+// Applies saved theme on every page 
+document.addEventListener('DOMContentLoaded', () => {
+   
+    const toggle = document.querySelector('.theme-controller');
+    const root   = document.documentElement;
+    const saved  = localStorage.getItem('theme') || 'dark';
+    root.setAttribute('data-theme', saved);
+  
+    if (toggle) {
+      toggle.checked = (saved === 'light');
+      toggle.addEventListener('change', () => {
+        const theme = toggle.checked ? 'light' : 'dark';
+        root.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+      });
+    }
+  
+    // Handles navigation between pages
+    const dockButtons = document.querySelectorAll('.dock button');
+    dockButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        dockButtons.forEach(b => b.classList.remove('dock-active'));
+        btn.classList.add('dock-active');
+        const file = btn.getAttribute('data-file');
+        if (file) window.location.href = file;
+      });
+    });
+  });
+  
+/*
+--------------------------
 FOCUS TIMER SECTION
 -------------------------- 
 */
@@ -712,3 +747,10 @@ async function addDistractingApp() {
 
 // Initial render
 renderDistractingApps();
+
+
+/*
+-------------------------- 
+LEADERBOARD & REWARDS HUB
+--------------------------
+*/ 

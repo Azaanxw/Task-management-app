@@ -16,31 +16,27 @@ NAVIAGATION SECTION
 --------------------------
 */
 
-// Applies saved theme on every page 
+// Handles navigation between sections in the app
 document.addEventListener('DOMContentLoaded', () => {
-   
-    const toggle = document.querySelector('.theme-controller');
-    const root   = document.documentElement;
-    const saved  = localStorage.getItem('theme') || 'dark';
-    root.setAttribute('data-theme', saved);
-  
-    if (toggle) {
-      toggle.checked = (saved === 'light');
-      toggle.addEventListener('change', () => {
-        const theme = toggle.checked ? 'light' : 'dark';
-        root.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-      });
-    }
-  
-    // Handles navigation between pages
     const dockButtons = document.querySelectorAll('.dock button');
+    const sections    = {
+      home:      document.getElementById('home-section'),
+      leaderboard: document.getElementById('leaderboard-section'),
+      settings:  document.getElementById('settings-section'),
+    };
+  
     dockButtons.forEach(btn => {
       btn.addEventListener('click', () => {
+        // 1) toggle active class
         dockButtons.forEach(b => b.classList.remove('dock-active'));
         btn.classList.add('dock-active');
-        const file = btn.getAttribute('data-file');
-        if (file) window.location.href = file;
+  
+        // Hides all sections
+        Object.values(sections).forEach(s => s.classList.add('hidden'));
+  
+        // Shows only the target section
+        const target = btn.dataset.target;  
+        sections[target.replace('-section','')].classList.remove('hidden');
       });
     });
   });
@@ -754,3 +750,4 @@ renderDistractingApps();
 LEADERBOARD & REWARDS HUB
 --------------------------
 */ 
+  

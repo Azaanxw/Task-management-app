@@ -1,175 +1,331 @@
 <!DOCTYPE html>
 <html data-theme="dark" lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="./output.css" rel="stylesheet">
   <title>Task Management App</title>
 </head>
+
 <body class="bg-base-100">
-  <div class="min-h-screen w-full p-4">
-    <!-- HOME -->
-    <section id="home-section">
-    <!-- Title -->
-    <header class="w-full flex flex-col items-center mb-6">
-      <h1 class="text-4xl font-extrabold text-center">Task Management App 🎉</h1>
-      <div class="card bg-base-200 shadow-xl p-4 my-4"> <div class="card-body"> <h2 id="level-badge" class="card-title">Level 1</h2> <progress id="exp-progress" class="progress progress-primary" value="0" max="100"></progress> </div> </div>
-      <div class="mt-2">
-        <label class="swap swap-rotate">
-          <input type="checkbox" class="theme-controller" value="light" />
-          <!-- Sun icon -->
-          <svg class="swap-off h-10 w-10 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z" />
-          </svg>
-          <!-- Moon icon -->
-          <svg class="swap-on h-10 w-10 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z" />
-          </svg>
-        </label>
-      </div>
-    </header>
-    <!-- Timer Widget, Weekly chart and Folder container-->
-    <main class="flex flex-col md:flex-row gap-6 items-stretch">
-      <!-- Left Column: Timer and Weekly Chart -->
-      <div class="flex flex-col gap-6 flex-1" id="left-column">
-        <!-- Focus Timer -->
-        <div class="bg-base-200 p-6 rounded-lg shadow-xl">
-          <h2 class="text-3xl font-bold mb-4">Focus Timer</h2>
-          
-          <div class="flex justify-evenly mb-4">
-            <div class="flex flex-col items-center flex-1 mx-2">
-              <label class="font-semibold">Focus Time (mins)</label>
-              <input type="number" id="focus-input" min="1" value="25" class="input input-bordered w-full text-center" />
-            </div>
-            <div class="flex flex-col items-center flex-1 mx-2">
-              <label class="font-semibold">Break Time (mins)</label>
-              <input type="number" id="break-input" min="1" value="5" class="input input-bordered w-full text-center" />
+  <div class="min-h-screen flex flex-col">
+    <main class="flex-1 overflow-auto p-4 pb-16">
+      <!-- HOME -->
+      <section id="home-section">
+        <!-- Title -->
+        <header class="w-full flex flex-col items-center mb-6">
+          <h1 class="text-4xl font-extrabold text-center">Task Management App 🎉</h1>
+          <div class="card bg-base-200 shadow-xl p-4 my-4">
+            <div class="card-body">
+              <h2 id="level-badge" class="card-title">Level 1</h2> <progress id="exp-progress"
+                class="progress progress-primary" value="0" max="100"></progress>
             </div>
           </div>
-          <div class="flex justify-center">
-            <svg class="mt-4" width="150" height="150">
-              <circle cx="75" cy="75" r="60" stroke="gray" stroke-width="5" fill="none" />
-              <circle id="progress-circle" cx="75" cy="75" r="60" stroke="blue" stroke-width="5" fill="none" stroke-dasharray="377" stroke-dashoffset="0" />
-            </svg>
+        </header>
+        <!-- Timer Widget, Weekly chart and Folder container-->
+        <main class="flex flex-col md:flex-row gap-6 items-stretch">
+          <!-- Left Column: Timer and Weekly Chart -->
+          <div class="flex flex-col gap-6 flex-1" id="left-column">
+            <!-- Focus Timer -->
+            <div class="bg-base-200 p-6 rounded-lg shadow-xl">
+              <h2 class="text-3xl font-bold mb-4">Focus Timer</h2>
+
+              <div class="flex justify-evenly mb-4">
+                <div class="flex flex-col items-center flex-1 mx-2">
+                  <label class="font-semibold">Focus Time (mins)</label>
+                  <input type="number" id="focus-input" min="1" value="25"
+                    class="input input-bordered w-full text-center" />
+                </div>
+                <div class="flex flex-col items-center flex-1 mx-2">
+                  <label class="font-semibold">Break Time (mins)</label>
+                  <input type="number" id="break-input" min="1" value="5"
+                    class="input input-bordered w-full text-center" />
+                </div>
+              </div>
+              <div class="flex justify-center">
+                <svg class="mt-4" width="150" height="150">
+                  <circle cx="75" cy="75" r="60" stroke="gray" stroke-width="5" fill="none" />
+                  <circle id="progress-circle" cx="75" cy="75" r="60" stroke="blue" stroke-width="5" fill="none"
+                    stroke-dasharray="377" stroke-dashoffset="0" />
+                </svg>
+              </div>
+              <div id="timer-display" class="text-4xl font-bold mt-4 text-center">25:00</div>
+              <div class="flex justify-between mt-4">
+                <button class="btn btn-success flex-1 mx-2" id="start-timer">Start</button>
+                <button class="btn btn-primary flex-1 mx-2" id="pause-timer">Pause</button>
+                <button class="btn btn-error flex-1 mx-2" id="reset-timer">Reset</button>
+              </div>
+              <p id="total-focus-time" class="text-lg mt-4 text-center">Total Focus Time: 0h 0m</p>
+            </div>
+            <!-- Weekly Focus Chart -->
+            <div id="focus-chart-container" class="bg-base-200 p-6 rounded-xl shadow-lg">
+              <h2 class="text-lg font-bold text-center mb-2">Weekly focused time</h2>
+              <canvas id="focusChart"></canvas>
+            </div>
           </div>
-          <div id="timer-display" class="text-4xl font-bold mt-4 text-center">25:00</div>
-          <div class="flex justify-between mt-4">
-            <button class="btn btn-success flex-1 mx-2" id="start-timer">Start</button>
-            <button class="btn btn-primary flex-1 mx-2" id="pause-timer">Pause</button>
-            <button class="btn btn-error flex-1 mx-2" id="reset-timer">Reset</button>
+          <!-- Right Column: Folders container -->
+          <div class="flex-1">
+            <div class="bg-base-200 p-4 rounded-lg shadow-lg overflow-auto" id="folder-wrapper">
+              <h2 class="text-lg font-bold text-center">Folders</h2>
+              <div class="flex space-x-2 mt-2">
+                <input type="text" class="input input-ghost w-full" id="folder-name" placeholder="New Folder Name" />
+                <button class="btn btn-neutral" onclick="addFolder()">Add</button>
+              </div>
+              <!-- Folders Container -->
+              <div id="folders-container" class="mt-4 space-y-2">
+                <!-- Dynamically added folders will appear here -->
+              </div>
+            </div>
           </div>
-          <p id="total-focus-time" class="text-lg mt-4 text-center">Total Focus Time: 0h 0m</p>
+        </main>
+
+        <!-- Application Tracker Section -->
+        <section class="mt-8">
+          <h2 class="text-lg font-bold">Application Tracker</h2>
+          <div id="chart-container"
+            class="w-full h-[30rem] p-6 bg-base-200 rounded-xl shadow-lg flex items-center justify-center">
+            <canvas id="appUsageChart"></canvas>
+          </div>
+        </section>
+
+        <!-- Currently Active Applications -->
+        <section class="mt-8">
+          <h2 class="text-lg font-bold">Currently Active Applications</h2>
+          <ul id="app-usage-list" class="w-full">
+            <!-- Tracked applications and their times will be displayed here -->
+          </ul>
+        </section>
+        <!-- Distracting Applications Management -->
+        <section class="mb-8 bg-base-200 p-6 rounded-lg shadow-xl">
+          <h2 class="text-xl font-bold mb-4">Distracting Applications</h2>
+          <div class="flex gap-2">
+            <input id="distracting-app-input" type="text" placeholder="Enter distracting apps here"
+              class="input input-bordered w-full" />
+            <button onclick="addDistractingApp()" class="btn btn-neutral">Add</button>
+          </div>
+          <ul id="distracting-app-list" class="mt-4 list-disc list-inside">
+            <!-- Current distracting apps will be dynamically listed here -->
+          </ul>
+        </section>
+
+      </section>
+
+      <!-- LEADERBOARD & REWARDS -->
+      <section id="leaderboard-section" class="hidden flex-1 flex flex-col p-6 overflow-auto">
+        <!-- Title -->
+        <h1 class="text-3xl font-bold text-center mb-6">Leaderboard &amp; Rewards</h1>
+
+        <div class="flex flex-col lg:flex-row flex-1 gap-6 items-stretch">
+          <!-- Leaderboard Panel -->
+          <div class="card bg-base-200 shadow-xl flex-1 lg:basis-0 flex flex-col min-h-0">
+            <div class="card-body flex-1 overflow-auto">
+              <h2 class="card-title text-2xl mb-4 self-center">🏆 Leaderboard</h2>
+              <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Player</th>
+                      <th>Level</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th>1</th>
+                      <td>Alice</td>
+                      <td>15</td>
+                    </tr>
+                    <tr>
+                      <th>2</th>
+                      <td>Bob</td>
+                      <td>14</td>
+                    </tr>
+                    <tr>
+                      <th>3</th>
+                      <td>Carla</td>
+                      <td>13</td>
+                    </tr>
+                    <tr>
+                      <th>4</th>
+                      <td>David</td>
+                      <td>12</td>
+                    </tr>
+                    <tr>
+                      <th>5</th>
+                      <td>Eva</td>
+                      <td>11</td>
+                    </tr>
+                    <tr>
+                      <th>6</th>
+                      <td>Frank</td>
+                      <td>10</td>
+                    </tr>
+                    <tr>
+                      <th>7</th>
+                      <td>Gina</td>
+                      <td>9</td>
+                    </tr>
+                    <tr>
+                      <th>8</th>
+                      <td>Hank</td>
+                      <td>8</td>
+                    </tr>
+                    <tr>
+                      <th>9</th>
+                      <td>Iris</td>
+                      <td>7</td>
+                    </tr>
+                    <tr>
+                      <th>10</th>
+                      <td>Judy</td>
+                      <td>6</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rewards Panel -->
+          <div class="card bg-base-200 shadow-xl flex-1 lg:basis-0 flex flex-col min-h-0">
+            <div class="card-body flex-1 overflow-auto">
+              <h2 class="card-title text-2xl mb-4 self-center">🔓 Rewards</h2>
+              <div id="themes-container"
+                class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-x-8 gap-y-6 auto-rows-fr h-full content-start">
+              </div>
+              <p class="text-sm mt-auto pt-6 text-center">
+                Unlock themes by reaching the required level
+              </p>
+            </div>
+          </div>
         </div>
-        <!-- Weekly Focus Chart -->
-        <div id="focus-chart-container" class="bg-base-200 p-6 rounded-xl shadow-lg">
-          <h2 class="text-lg font-bold text-center mb-2">Weekly focused time</h2>
-          <canvas id="focusChart"></canvas>
-        </div>
-      </div>
-      <!-- Right Column: Folders container -->
-      <div class="flex-1">
-        <div class="bg-base-200 p-4 rounded-lg shadow-lg overflow-auto" id="folder-wrapper">
-          <h2 class="text-lg font-bold text-center">Folders</h2>
-          <div class="flex space-x-2 mt-2">
-            <input type="text" class="input input-ghost w-full" id="folder-name" placeholder="New Folder Name" />
-            <button class="btn btn-neutral" onclick="addFolder()">Add</button>
+        <!-- USER STATS -->
+        <div class="card bg-base-200 shadow-xl p-6 mt-6 w-full">
+          <div class="card-body space-y-10">
+
+            <div class="space-y-6">
+              <h3 class="text-xl font-semibold text-center">Your Stats</h3>
+
+              <!-- XP progress -->
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-medium">Level <span id="profile-level">1</span></span>
+                  <span id="xp-to-next" class="text-xs text-gray-400">100 XP to next level</span>
+                </div>
+                <progress id="profile-exp-progress" class="progress progress-primary w-full" value="0"
+                  max="100"></progress>
+              </div>
+
+              <!-- Other stats -->
+              <div class="stats stats-vertical md:stats-horizontal w-full justify-center gap-4">
+
+                <!-- Focus hours (weekly) -->
+                <div class="stat">
+                  <div class="stat-figure text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                      class="inline-block w-8 h-8 stroke-current">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+                    </svg>
+                  </div>
+                  <div class="stat-title">Focused hrs (week)</div>
+                  <div id="focus-hours-week" class="stat-value">0 h 0 m</div>
+                </div>
+
+                <!-- Total tasks completed -->
+                <div class="stat">
+                  <div class="stat-figure text-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                      class="inline-block w-8 h-8 stroke-current">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div class="stat-title">Tasks completed</div>
+                  <div id="tasks-completed" class="stat-value">0</div>
+                </div>
+
+                <!-- Current streak -->
+                <div class="stat">
+                  <div class="stat-figure text-warning">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                      class="inline-block w-8 h-8 stroke-current">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 3c2.21 1.667 4 5 4 8a4 4 0 11-8 0c0-3 1.79-6.333 4-8z" />
+                    </svg>
+                  </div>
+                  <div class="stat-title">Current streak</div>
+                  <div id="focus-streak" class="stat-value">0 days</div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- ── Unlocked Themes ── -->
+            <div class="space-y-4">
+              <h3 class="text-xl font-semibold text-center">Unlocked Themes</h3>
+              <div id="profile-themes" class="flex flex-wrap gap-3 justify-center">
+                <!-- Dynamically added themes will appear here -->
+              </div>
+            </div>
+
           </div>
-          <!-- Folders Container -->
-          <div id="folders-container" class="mt-4 space-y-2">
-            <!-- Dynamically added folders will appear here -->
-          </div>
         </div>
+
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="settings-section" class="hidden">
+        <h1 class="text-3xl font-bold mb-4">Settings</h1>
+      </section>
+      <!-- Navigation dock -->
+      <div class="dock dock-lg">
+        <button data-target="home-section" class="dock-active">
+          <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <g fill="currentColor" stroke-linejoin="miter" stroke-linecap="butt">
+              <polyline points="1 11 12 2 23 11" fill="none" stroke="currentColor" stroke-miterlimit="10"
+                stroke-width="2"></polyline>
+              <path d="m5,13v7c0,1.105.895,2,2,2h10c1.105,0,2-.895,2-2v-7" fill="none" stroke="currentColor"
+                stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></path>
+              <line x1="12" y1="22" x2="12" y2="18" fill="none" stroke="currentColor" stroke-linecap="square"
+                stroke-miterlimit="10" stroke-width="2"></line>
+            </g>
+          </svg>
+          <span class="dock-label"></span>
+        </button>
+
+        <button data-target="leaderboard-section">
+          <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <g fill="currentColor" stroke-linejoin="miter" stroke-linecap="butt">
+              <polyline points="3 14 9 14 9 17 15 17 15 14 21 14" fill="none" stroke="currentColor"
+                stroke-miterlimit="10" stroke-width="2"></polyline>
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor"
+                stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></rect>
+            </g>
+          </svg>
+          <span class="dock-label whitespace-nowrap"></span>
+        </button>
+
+        <button data-target="settings-section">
+          <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <g fill="currentColor" stroke-linejoin="miter" stroke-linecap="butt">
+              <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-linecap="square"
+                stroke-miterlimit="10" stroke-width="2"></circle>
+              <path
+                d="m22,13.25v-2.5l-2.318-.966c-.167-.581-.395-1.135-.682-1.654l.954-2.318-1.768-1.768-2.318.954c-.518-.287-1.073-.515-1.654-.682l-.966-2.318h-2.5l-.966,2.318c-.581.167-1.135.395-1.654.682l-2.318-.954-1.768,1.768.954,2.318c-.287.518-.515,1.073-.682,1.654l-2.318.966v2.5l2.318.966c.167.581.395,1.135.682,1.654l-.954,2.318,1.768,1.768,2.318-.954c.518.287,1.073.515,1.654.682l.966,2.318h2.5l.966-2.318c.581-.167,1.135-.395,1.654-.682l2.318.954,1.768-1.768-.954-2.318c.287-.518.515-1.073.682-1.654l2.318-.966Z"
+                fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="2">
+              </path>
+            </g>
+          </svg>
+          <span class="dock-label"></span>
+        </button>
       </div>
-    </main>
-
-    <!-- Application Tracker Section -->
-    <section class="mt-8">
-      <h2 class="text-lg font-bold">Application Tracker</h2>
-      <div id="chart-container" class="w-full h-[30rem] p-6 bg-base-200 rounded-xl shadow-lg flex items-center justify-center">
-        <canvas id="appUsageChart"></canvas>
-      </div>
-    </section>
-
-    <!-- Currently Active Applications -->
-    <section class="mt-8">
-      <h2 class="text-lg font-bold">Currently Active Applications</h2>
-      <ul id="app-usage-list" class="w-full">
-        <!-- Tracked applications and their times will be displayed here -->
-      </ul>
-    </section>
-     <!-- Distracting Applications Management -->
-     <section class="mb-8 bg-base-200 p-6 rounded-lg shadow-xl">
-      <h2 class="text-xl font-bold mb-4">Distracting Applications</h2>
-      <div class="flex gap-2">
-        <input id="distracting-app-input" type="text" placeholder="Enter distracting apps here" class="input input-bordered w-full" />
-        <button onclick="addDistractingApp()" class="btn btn-neutral">Add</button>
-      </div>
-      <ul id="distracting-app-list" class="mt-4 list-disc list-inside">
-        <!-- Current distracting apps will be dynamically listed here -->
-      </ul>
-    </section>
-      <!-- Using a ResizeObserver to update folder-wrapper height when leftColumn changes size (weekly focused chart updates initially) -->
-  <script>
-    window.addEventListener("load", () => {
-    const leftColumn = document.getElementById("left-column");
-    const folderWrapper = document.getElementById("folder-wrapper");
-
-    let resizePending = false;
-
-    function updateFolderHeight() {
-      folderWrapper.style.height = leftColumn.offsetHeight + "px";
-    }
-
-    function handleResize() {
-      requestAnimationFrame(updateFolderHeight);
-    }
-
-    if (window.ResizeObserver) {
-      const observer = new ResizeObserver(() => {
-        handleResize();
-      });
-      observer.observe(leftColumn);
-    }
-
-    window.addEventListener("resize", handleResize);
-
-    updateFolderHeight();
-  });
-  </script>
-  </section>
-
-  <!-- LEADERBOARD & REWARDS -->
-  <section id="leaderboard-section" class="hidden">
-    <h1 class="text-3xl font-bold mb-4">Leaderboard &amp; Rewards</h1>
-    <!-- … -->
-  </section>
-
-  <!-- SETTINGS -->
-  <section id="settings-section" class="hidden">
-    <h1 class="text-3xl font-bold mb-4">Settings</h1>
-    <!-- … -->
-  </section>
-    <!-- Navigation dock -->
-    <div class="dock dock-lg">
-      <button data-target="home-section" class="dock-active">
-        <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="currentColor" stroke-linejoin="miter" stroke-linecap="butt"><polyline points="1 11 12 2 23 11" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"></polyline><path d="m5,13v7c0,1.105.895,2,2,2h10c1.105,0,2-.895,2-2v-7" fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></path><line x1="12" y1="22" x2="12" y2="18" fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></line></g></svg>
-        <span class="dock-label">Home</span>
-      </button>
-      
-      <button data-target="leaderboard-section">
-        <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="currentColor" stroke-linejoin="miter" stroke-linecap="butt"><polyline points="3 14 9 14 9 17 15 17 15 14 21 14" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"></polyline><rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></rect></g></svg>
-        <span class="dock-label whitespace-nowrap">Leaderboard & Rewards</span>
-      </button>
-      
-      <button data-target="settings-section">
-        <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="currentColor" stroke-linejoin="miter" stroke-linecap="butt"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></circle><path d="m22,13.25v-2.5l-2.318-.966c-.167-.581-.395-1.135-.682-1.654l.954-2.318-1.768-1.768-2.318.954c-.518-.287-1.073-.515-1.654-.682l-.966-2.318h-2.5l-.966,2.318c-.581.167-1.135.395-1.654.682l-2.318-.954-1.768,1.768.954,2.318c-.287.518-.515,1.073-.682,1.654l-2.318.966v2.5l2.318.966c.167.581.395,1.135.682,1.654l-.954,2.318,1.768,1.768,2.318-.954c.518.287,1.073.515,1.654.682l.966,2.318h2.5l.966-2.318c.581-.167,1.135-.395,1.654-.682l2.318.954,1.768-1.768-.954-2.318c.287-.518.515-1.073.682-1.654l2.318-.966Z" fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="2"></path></g></svg>
-        <span class="dock-label">Settings</span>
-      </button>
-    </div>
   </div>
+  </main>
   <script src="renderer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 
 </body>
+
 </html>

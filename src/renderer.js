@@ -9,6 +9,25 @@ let isBreak = false;
 let lastFocusUpdate = 0;
 let focusChart = null;
 let sessionXpAwarded = false;
+let totalTasksCompleted = 0;
+
+// DaisyUI themes + required level to unlock them
+const themes = [
+    { name: 'dark', level: 1 },
+    { name: 'light', level: 2 },
+    { name: 'cupcake', level: 3 },
+    { name: 'synthwave', level: 4 },
+    { name: 'bumblebee', level: 5 },
+    { name: 'emerald', level: 6 },
+    { name: 'corporate', level: 7 },
+    { name: 'retro', level: 8 },
+    { name: 'cyberpunk', level: 9 },
+    { name: 'valentine', level: 10 },
+    { name: 'halloween', level: 11 },
+    { name: 'garden', level: 12 },
+    { name: 'forest', level: 13 },
+    { name: 'wireframe', level: 14 }
+];
 
 /*
 --------------------------
@@ -16,31 +35,64 @@ NAVIAGATION SECTION
 --------------------------
 */
 
-// Handles navigation between sections in the app
+// Handles navigation between the different sections & updates the UI accordingly
 document.addEventListener('DOMContentLoaded', () => {
+    // Handles the navigation between sections
     const dockButtons = document.querySelectorAll('.dock button');
-    const sections    = {
-      home:      document.getElementById('home-section'),
-      leaderboard: document.getElementById('leaderboard-section'),
-      settings:  document.getElementById('settings-section'),
+    const sections = {
+        home:        document.getElementById('home-section'),
+        leaderboard: document.getElementById('leaderboard-section'),
+        settings:    document.getElementById('settings-section'),
     };
-  
+
     dockButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        // 1) toggle active class
-        dockButtons.forEach(b => b.classList.remove('dock-active'));
-        btn.classList.add('dock-active');
-  
-        // Hides all sections
-        Object.values(sections).forEach(s => s.classList.add('hidden'));
-  
-        // Shows only the target section
-        const target = btn.dataset.target;  
-        sections[target.replace('-section','')].classList.remove('hidden');
-      });
+        btn.addEventListener('click', () => {
+            // Toggles active class for selected button
+            dockButtons.forEach(b => b.classList.remove('dock-active'));
+            btn.classList.add('dock-active');
+
+            // Hides all sections
+            Object.values(sections).forEach(s => s.classList.add('hidden'));
+
+            // Shows only the selected section
+            const target = btn.dataset.target;
+            sections[target.replace('-section', '')].classList.remove('hidden');
+        });
     });
-  });
-  
+    updateRewardsUI();
+    updateProfileUI();
+
+    const leftColumn    = document.getElementById('left-column');
+    const folderWrapper = document.getElementById('folder-wrapper');
+    if (!leftColumn || !folderWrapper) return;
+
+    // Handles the folder height adjustment
+    function setFolderHeight() {
+        folderWrapper.style.height = leftColumn.offsetHeight + 'px';
+    }
+
+    // Throttle with requestAnimationFrame to avoid excessive calls  
+    let rafId = null;
+    function scheduleHeightUpdate() {
+        if (rafId == null) {
+            rafId = requestAnimationFrame(() => {
+                setFolderHeight();
+                rafId = null;               // resets flag after running
+            });
+        }
+    }
+
+    // Using a ResizeObserver to update folder-wrapper height when leftColumn changes size (weekly focused chart updates initially)
+    if (window.ResizeObserver) {
+        new ResizeObserver(scheduleHeightUpdate).observe(leftColumn);
+    }
+
+    // Reacts when the whole window resizes
+    window.addEventListener('resize', scheduleHeightUpdate);
+    setFolderHeight(); 
+});
+
+
 /*
 --------------------------
 FOCUS TIMER SECTION
@@ -113,11 +165,9 @@ function pauseTimer() {
 
             // Computes full session length in seconds
             const sessionSeconds = focusTime - timeRemaining;
-            console.log('Session total seconds:', sessionSeconds);
 
             // Awards 1 XP per full minute of that session
             const xpEarned = Math.floor(sessionSeconds / 60);
-            console.log('XP to award on pause:', xpEarned);
             if (xpEarned > 0) {
                 awardExp(xpEarned);
                 alert(`Session paused! You earned ${xpEarned} XP.`);
@@ -209,63 +259,63 @@ let weeklyFocusData = {
     4: 0,  // Thursday
     5: 0,  // Friday
     6: 0   // Saturday
-  };
+};
 
- // Updates the charts which show the total time spent focusing  
+// Updates the charts which show the total time spent focusing  
 function updateFocusChart() {
     const ctx = document.getElementById('focusChart').getContext('2d');
-    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat','Sun'];
-    
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
     const focusTimes = labels.map((_, index) => weeklyFocusData[index]);
-    
+
     const focusTimesInMinutes = focusTimes.map(seconds => seconds / 60);
-    
+
     if (focusChart) {
-    // Updates existing chart data
-    focusChart.data.datasets[0].data = focusTimesInMinutes;
-    focusChart.update();
+        // Updates existing chart data
+        focusChart.data.datasets[0].data = focusTimesInMinutes;
+        focusChart.update();
     } else {
-    // Creates the chart for the first time
-    focusChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-        labels: labels,
-        datasets: [{
-            label: 'Focus Time (minutes)',
-            data: focusTimesInMinutes,
-            backgroundColor: 'rgba(0, 102, 255, 0.8)',
-            borderColor: 'rgba(0, 85, 204, 1)',
-            borderWidth: 1,
-            borderRadius: 10,
-            barThickness: 40,
-        }]
-        },
-        options: {
-        scales: {
-            y: {
-            beginAtZero: true,
-            ticks: {
-                // Displays the y-axis in minutes
-                callback: function(value) {
-                return value + ' min';
-                }
-            }
-            }
-        },
-        plugins: {
-            tooltip: {
-            callbacks: {
-                label: function(context) {
-                return context.parsed.y + ' min';
-                }
-            }
+        // Creates the chart for the first time
+        focusChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Focus Time (minutes)',
+                    data: focusTimesInMinutes,
+                    backgroundColor: 'rgba(0, 102, 255, 0.8)',
+                    borderColor: 'rgba(0, 85, 204, 1)',
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    barThickness: 40,
+                }]
             },
-            legend: {
-            display: false
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            // Displays the y-axis in minutes
+                            callback: function (value) {
+                                return value + ' min';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.parsed.y + ' min';
+                            }
+                        }
+                    },
+                    legend: {
+                        display: false
+                    }
+                }
             }
-        }
-        }
-    });
+        });
     }
 }
 
@@ -362,7 +412,7 @@ async function trackApplicationUsage() {
     lastActiveApp = appName;
     lastActiveTime = now;
     renderAppUsage();
-    updateChart(); 
+    updateChart();
 }
 
 // Call `trackApplicationUsage` every second
@@ -377,7 +427,7 @@ function updateChart() {
     // Gets sorted application data (Top 5 only)
     const sortedApps = Object.entries(appUsageData)
         .sort((a, b) => b[1].time - a[1].time) // Sort by highest time spent
-        .slice(0, 5); 
+        .slice(0, 5);
 
     const labels = sortedApps.map(([app]) => app);
     const times = sortedApps.map(([_, data]) => data.time);
@@ -401,7 +451,7 @@ function updateChart() {
                 label: 'Time Spent (seconds)',
                 data: times,
                 backgroundColor: 'rgba(0, 102, 255, 0.8)',
-                borderColor: 'rgba(0, 85, 204, 1)', 
+                borderColor: 'rgba(0, 85, 204, 1)',
                 borderWidth: 1,
                 borderRadius: 10,
                 barThickness: 100,
@@ -412,8 +462,8 @@ function updateChart() {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
-                duration: 600, 
-                easing: 'easeOutExpo' 
+                duration: 600,
+                easing: 'easeOutExpo'
             },
             scales: {
                 y: {
@@ -422,7 +472,7 @@ function updateChart() {
                     ticks: {
                         font: {
                             size: 14,
-                            weight: "bold", 
+                            weight: "bold",
                             family: 'Inter, sans-serif'
                         },
                         color: '#A0AEC0'
@@ -435,7 +485,7 @@ function updateChart() {
                     ticks: {
                         font: {
                             size: 16,
-                            weight: "bold", 
+                            weight: "bold",
                             family: 'Inter, sans-serif'
                         },
                         color: '#A0AEC0'
@@ -443,12 +493,12 @@ function updateChart() {
                     grid: {
                         display: false
                     },
-                    barPercentage: 0.85, 
+                    barPercentage: 0.85,
                     categoryPercentage: 0.9
                 }
             },
             plugins: {
-                legend: { display: false }, 
+                legend: { display: false },
                 tooltip: {
                     enabled: true,
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -468,7 +518,7 @@ FOLDERS SECTION
 */
 
 // Adding tasks 
-const folders = {}; 
+const folders = {};
 let currentFolder = null; // Tracks the currently selected folder
 
 // Function to render folder list
@@ -579,7 +629,7 @@ function addTask(folder) {
         return;
     }
     folders[folder].push({ title: taskTitle, completed: false });
-    taskInput.value = ""; 
+    taskInput.value = "";
     renderFolders();
 }
 
@@ -590,12 +640,14 @@ function toggleTaskCompletion(folder, taskIndex) {
     const wasIncomplete = !task.completed;
     task.completed = !task.completed;
     renderFolders();
-    
+
     // Awards EXP only if the task was completed
     if (wasIncomplete && task.completed) {
-      awardExp(20); 
+        awardExp(20);
+        totalTasksCompleted++;
+        updateProfileUI();
     }
-  }
+}
 
 // Function to select a folder
 function selectFolder(folder) {
@@ -627,18 +679,20 @@ function awardExp(points) {
         showLevelUpAnimation();
     }
     updateLevelUI();
+    updateRewardsUI();
+    updateProfileUI();
     showExpAnimation(points);
-} 
+}
 
 // UI update for level progress bar
 function updateLevelUI() {
-  const expBar = document.getElementById('exp-progress');
-  const levelBadge = document.getElementById('level-badge');
-  if (expBar && levelBadge) {
-    expBar.value = userExp;
-    expBar.max = expThreshold;
-    levelBadge.innerText = 'Level ' + userLevel;
-  }
+    const expBar = document.getElementById('exp-progress');
+    const levelBadge = document.getElementById('level-badge');
+    if (expBar && levelBadge) {
+        expBar.value = userExp;
+        expBar.max = expThreshold;
+        levelBadge.innerText = 'Level ' + userLevel;
+    }
 }
 
 // Creates level up animation
@@ -647,32 +701,32 @@ function showLevelUpAnimation() {
     const el = document.createElement('div');
     el.innerText = 'LEVEL UP!';
     Object.assign(el.style, {
-      position:   'fixed',
-      top:        '50%',
-      left:       '50%',
-      transform:  'translate(-50%, -50%) scale(0)',
-      fontSize:   '3rem',
-      fontWeight: 'bold',
-      color:      '#4ade80',
-      textShadow: '0 0 8px rgba(74,210,84,0.7)',
-      opacity:    '0',
-      pointerEvents: 'none',
-      zIndex:     '999',
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%) scale(0)',
+        fontSize: '3rem',
+        fontWeight: 'bold',
+        color: '#4ade80',
+        textShadow: '0 0 8px rgba(74,210,84,0.7)',
+        opacity: '0',
+        pointerEvents: 'none',
+        zIndex: '999',
     });
     document.body.appendChild(el);
-  
+
     // Adds confetti animation
-    confetti({ particleCount:30, spread:60, origin:{x:0.5,y:0.4} });
-  
+    confetti({ particleCount: 30, spread: 60, origin: { x: 0.5, y: 0.4 } });
+
     // 3) Fading in and out text animation
     el.animate([
-      { transform: 'translate(-50%, -50%) scale(0)', opacity: 0 },
-      { transform: 'translate(-50%, -50%) scale(1.2)', opacity: 1, offset: 0.4 },
-      { transform: 'translate(-50%, -50%) scale(1)',   opacity: 1, offset: 0.6 },
-      { transform: 'translate(-50%, -50%) scale(1)',   opacity: 0   },
+        { transform: 'translate(-50%, -50%) scale(0)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) scale(1.2)', opacity: 1, offset: 0.4 },
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.6 },
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 0 },
     ], {
-      duration: 4000,
-      easing:   'cubic-bezier(0.22,1,0.36,1)'
+        duration: 4000,
+        easing: 'cubic-bezier(0.22,1,0.36,1)'
     }).onfinish = () => el.remove();
 }
 
@@ -709,35 +763,35 @@ function showExpAnimation(amount) {
 -------------------------- 
 DISTRACTING APPS SECTION 
 --------------------------
-*/ 
+*/
 
 // Renders and shows the list of distracting apps 
 function renderDistractingApps(appList = ['Notepad']) {
     const listElement = document.getElementById('distracting-app-list');
     listElement.innerHTML = appList.map(app => `<li>${app}</li>`).join('');
-  }
-  
+}
+
 // Fetches the global data
 window.globalDataAPI.getGlobalData().then(data => {
-renderDistractingApps(data.distractingApps);
+    renderDistractingApps(data.distractingApps);
 });
 
 // Listens for updates broadcast from the main process
 window.globalDataAPI.onGlobalDataUpdate((data) => {
-renderDistractingApps(data.distractingApps);
+    renderDistractingApps(data.distractingApps);
 });
-  
+
 // Function to add a distracting ap by user
 async function addDistractingApp() {
     const input = document.getElementById('distracting-app-input');
     const appName = input.value.trim();
     if (appName) {
-    const updatedData = await window.globalDataAPI.addDistractingApp(appName);
-    // Render the updated list
-    renderDistractingApps(updatedData.distractingApps);
-    input.value = '';
+        const updatedData = await window.globalDataAPI.addDistractingApp(appName);
+        // Render the updated list
+        renderDistractingApps(updatedData.distractingApps);
+        input.value = '';
     } else {
-    alert('App already listed or invalid input.');
+        alert('App already listed or invalid input.');
     }
 }
 
@@ -749,5 +803,105 @@ renderDistractingApps();
 -------------------------- 
 LEADERBOARD & REWARDS HUB
 --------------------------
-*/ 
-  
+*/
+
+// Rewards hub setup
+function updateRewardsUI() {
+    // Lock icon for locked themes
+    const LOCK_SVG = `
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 11c-1.657 0-3 1.343-3 3v2a2 2 0 002 2h2a2 2 0 002-2v-2c0-1.657-1.343-3-3-3z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 11V7a5 5 0 1110 0v4"/>
+      </svg>`;
+
+    const container = document.getElementById('themes-container');
+    if (!container) return;  // Page might not have loaded the section yet
+    container.innerHTML = '';
+
+    // Adds each theme to the container
+    themes.forEach(({ name, level }) => {
+        const unlocked = userLevel >= level;
+        const btn = document.createElement('button');
+        btn.className = [
+            'btn btn-outline w-full',
+            'text-sm sm:text-base py-3 px-4',
+            'flex justify-between items-center',
+            unlocked ? '' : 'opacity-50 pointer-events-none'
+        ].join(' ');
+        btn.innerHTML = `
+        <span class="capitalize">
+          ${name} <small class="text-xs text-gray-400">Lv ${level}</small>
+        </span>
+        ${unlocked ? '' : LOCK_SVG}
+      `;
+        if (unlocked) {
+            btn.addEventListener('click', () => {
+                document.documentElement.setAttribute('data-theme', name);
+                localStorage.setItem('theme', name);
+            });
+        }
+        container.appendChild(btn);
+    });
+}
+
+// Updates user profile
+function updateProfileUI() {
+    const expBar = document.getElementById('exp-progress');
+    const levelBadge = document.getElementById('level-badge');
+    if (expBar && levelBadge) {
+        expBar.value = userExp;
+        expBar.max = expThreshold;
+        levelBadge.innerText = 'Level ' + userLevel;
+    }
+
+    // Profile‑card elements
+    const profLevel = document.getElementById('profile-level');
+    const profExp = document.getElementById('profile-exp-progress');
+    const xpNext = document.getElementById('xp-to-next');
+    const focusH = document.getElementById('focus-hours-week');
+    const tasksEl = document.getElementById('tasks-completed');
+    const streakEl = document.getElementById('focus-streak');
+
+    if (profLevel) profLevel.innerText = userLevel;
+
+    if (profExp && xpNext) {
+        profExp.value = userExp;
+        profExp.max = expThreshold;
+        xpNext.innerText = (expThreshold - userExp) + ' XP to next level';
+    }
+
+    if (focusH) {
+        const weekSecs = Object.values(weeklyFocusData).reduce((a, b) => a + b, 0);
+        const hrs = Math.floor(weekSecs / 3600);
+        const mins = Math.floor((weekSecs % 3600) / 60);
+        focusH.innerText = `${hrs} h ${mins} m`;
+    }
+    let streak = getCurrentStreak();
+    if (tasksEl) tasksEl.innerText = totalTasksCompleted;
+    if (streakEl) streakEl.innerText = `${streak} day${streak === 1 ? '' : 's'}`;
+
+    // Shows unlocked themes 
+    const profileContainer = document.getElementById('profile-themes');
+    if (profileContainer) {
+        profileContainer.innerHTML = themes
+            .filter(t => userLevel >= t.level)
+            .map(t => `<span class="badge badge-primary capitalize">${t.name}</span>`)
+            .join('');
+    }
+}
+
+// Calculates the current streak of focus days
+function getCurrentStreak() {
+    const today = new Date().getDay();
+    let streak = 0;
+    for (let i = 0; i < 7; i++) {
+        const d = (today - i + 7) % 7;
+        if (weeklyFocusData[d] > 0) streak++;
+        else break;
+    }
+    return streak;
+}
+

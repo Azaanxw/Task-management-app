@@ -29,3 +29,26 @@ button {
     border-radius: 5px;
     cursor: pointer;
 }
+
+/* Hides scrollbar across all sections but still allows scrolling */
+
+/* Prevents button from moving positions */
+html { scrollbar-gutter: stable; }
+
+/* Hides scrollbar */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+main::-webkit-scrollbar,
+section::-webkit-scrollbar,
+div.overflow-auto::-webkit-scrollbar,
+div.overflow-y-auto::-webkit-scrollbar {
+  width: 0 !important;          
+  height: 0 !important;
+  background: transparent !important;
+}
+
+html, body, main, section,
+div.overflow-auto, div.overflow-y-auto {
+  scrollbar-width: none !important;    
+  -ms-overflow-style: none !important; 
+}

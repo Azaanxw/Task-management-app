@@ -102,7 +102,7 @@ async function updateOverlayBounds(win) {
 
 // Initialize windows after app is ready
 app.whenReady().then(() => {
-  Menu.setApplicationMenu(null); // Hides menu bar 
+  // Menu.setApplicationMenu(null); // Hides menu bar 
   // Main window
   mainWindow = new BrowserWindow({
     width: 800,

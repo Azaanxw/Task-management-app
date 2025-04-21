@@ -48,13 +48,13 @@
       <!-- HOME -->
       <section id="home-section">
         <!-- Title -->
-        <header class="w-full flex flex-col items-center mb-6">
-          <h1 class="text-4xl font-extrabold text-center">Task Management App 🎉</h1>
-          <div class="card bg-base-200 shadow-xl p-4 my-4">
-            <div class="card-body">
-              <h2 id="level-badge" class="card-title">Level 1</h2> <progress id="exp-progress"
-                class="progress progress-primary" value="0" max="100"></progress>
-            </div>
+        <header class="w-full flex flex-col items-center my-6">
+          <h1 class="text-4xl font-extrabold text-center mb-8">Task Management App 🎉</h1>
+
+          <!-- Circular Progress-->
+          <div class="radial-progress text-primary" id="exp-progress-circle"
+            style="--value:0; --size:6rem; --thickness:8px;">
+            <span id="exp-progress-level" class="text-lg font-bold">Level 1</span>
           </div>
         </header>
         <!-- Timer Widget, Weekly chart and Folder container-->
@@ -312,6 +312,10 @@
       <section id="settings-section" class="hidden">
         <h1 class="text-3xl font-bold mb-4">Settings</h1>
       </section>
+      <!-- NOTIFICATION AREA -->
+      <div id="alert-container"
+        class="fixed bottom-24 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-2 z-50 pointer-events-none">
+      </div>
       <!-- Navigation dock -->
       <div class="dock dock-lg">
         <button data-target="home-section" class="dock-active">

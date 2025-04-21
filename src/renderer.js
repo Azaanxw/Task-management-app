@@ -12,35 +12,35 @@ let sessionXpAwarded = false;
 let totalTasksCompleted = 0;
 // DaisyUI themes + required level to unlock them
 const themes = [
-    { name: 'dark', level: 1 },
-    { name: 'light', level: 2 },
-    { name: 'cupcake', level: 3 },
-    { name: 'synthwave', level: 4 },
-    { name: 'bumblebee', level: 5 },
-    { name: 'emerald', level: 6 },
-    { name: 'corporate', level: 7 },
-    { name: 'retro', level: 8 },
-    { name: 'cyberpunk', level: 9 },
-    { name: 'valentine', level: 10 },
-    { name: 'halloween', level: 11 },
-    { name: 'garden', level: 12 },
-    { name: 'forest', level: 13 },
-    { name: 'wireframe', level: 14 }
+  { name: 'dark', level: 1 },
+  { name: 'light', level: 2 },
+  { name: 'cupcake', level: 3 },
+  { name: 'synthwave', level: 4 },
+  { name: 'bumblebee', level: 5 },
+  { name: 'emerald', level: 6 },
+  { name: 'corporate', level: 7 },
+  { name: 'retro', level: 8 },
+  { name: 'cyberpunk', level: 9 },
+  { name: 'valentine', level: 10 },
+  { name: 'halloween', level: 11 },
+  { name: 'garden', level: 12 },
+  { name: 'forest', level: 13 },
+  { name: 'wireframe', level: 14 }
 ];
 
 /* CUSTOM TITLE BAR */
 document.addEventListener('DOMContentLoaded', () => {
-    // Custom window controls
-    const { minimise, maximise, close, toggleMax } = window.globalDataAPI;
-  
-    document.getElementById('min-btn') .addEventListener('click', minimise);
-    document.getElementById('max-btn') .addEventListener('click', toggleMax);
-    document.getElementById('close-btn').addEventListener('click', close);
+  // Custom window controls
+  const { minimise, maximise, close, toggleMax } = window.globalDataAPI;
 
-    // Toggles maximization on double-clicking the title bar
-    document.getElementById('titlebar')
-            .addEventListener('dblclick', toggleMax);
-  });
+  document.getElementById('min-btn').addEventListener('click', minimise);
+  document.getElementById('max-btn').addEventListener('click', toggleMax);
+  document.getElementById('close-btn').addEventListener('click', close);
+
+  // Toggles maximization on double-clicking the title bar
+  document.getElementById('titlebar')
+    .addEventListener('dblclick', toggleMax);
+});
 
 /*
 --------------------------
@@ -50,59 +50,59 @@ NAVIAGATION SECTION
 
 // Handles navigation between the different sections & updates folder UI
 document.addEventListener('DOMContentLoaded', () => {
-    // Handles the navigation between sections
-    const dockButtons = document.querySelectorAll('.dock button');
-    const sections = {
-        home:        document.getElementById('home-section'),
-        leaderboard: document.getElementById('leaderboard-section'),
-        settings:    document.getElementById('settings-section'),
-    };
+  // Handles the navigation between sections
+  const dockButtons = document.querySelectorAll('.dock button');
+  const sections = {
+    home: document.getElementById('home-section'),
+    leaderboard: document.getElementById('leaderboard-section'),
+    settings: document.getElementById('settings-section'),
+  };
 
-    dockButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Toggles active class for selected button
-            dockButtons.forEach(b => b.classList.remove('dock-active'));
-            btn.classList.add('dock-active');
+  dockButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Toggles active class for selected button
+      dockButtons.forEach(b => b.classList.remove('dock-active'));
+      btn.classList.add('dock-active');
 
-            // Hides all sections
-            Object.values(sections).forEach(s => s.classList.add('hidden'));
+      // Hides all sections
+      Object.values(sections).forEach(s => s.classList.add('hidden'));
 
-            // Shows only the selected section
-            const target = btn.dataset.target;
-            sections[target.replace('-section', '')].classList.remove('hidden');
-        });
+      // Shows only the selected section
+      const target = btn.dataset.target;
+      sections[target.replace('-section', '')].classList.remove('hidden');
     });
-    updateRewardsUI();
-    updateProfileUI();
+  });
+  updateRewardsUI();
+  updateProfileUI();
 
-    const leftColumn    = document.getElementById('left-column');
-    const folderWrapper = document.getElementById('folder-wrapper');
-    if (!leftColumn || !folderWrapper) return;
+  const leftColumn = document.getElementById('left-column');
+  const folderWrapper = document.getElementById('folder-wrapper');
+  if (!leftColumn || !folderWrapper) return;
 
-    // Handles the folder height adjustment
-    function setFolderHeight() {
-        folderWrapper.style.height = leftColumn.offsetHeight + 'px';
+  // Handles the folder height adjustment
+  function setFolderHeight() {
+    folderWrapper.style.height = leftColumn.offsetHeight + 'px';
+  }
+
+  // Throttle with requestAnimationFrame to avoid excessive calls  
+  let rafId = null;
+  function scheduleHeightUpdate() {
+    if (rafId == null) {
+      rafId = requestAnimationFrame(() => {
+        setFolderHeight();
+        rafId = null;               // resets flag after running
+      });
     }
+  }
 
-    // Throttle with requestAnimationFrame to avoid excessive calls  
-    let rafId = null;
-    function scheduleHeightUpdate() {
-        if (rafId == null) {
-            rafId = requestAnimationFrame(() => {
-                setFolderHeight();
-                rafId = null;               // resets flag after running
-            });
-        }
-    }
+  // Using a ResizeObserver to update folder-wrapper height when leftColumn changes size (weekly focused chart updates initially)
+  if (window.ResizeObserver) {
+    new ResizeObserver(scheduleHeightUpdate).observe(leftColumn);
+  }
 
-    // Using a ResizeObserver to update folder-wrapper height when leftColumn changes size (weekly focused chart updates initially)
-    if (window.ResizeObserver) {
-        new ResizeObserver(scheduleHeightUpdate).observe(leftColumn);
-    }
-
-    // Reacts when the whole window resizes
-    window.addEventListener('resize', scheduleHeightUpdate);
-    setFolderHeight(); 
+  // Reacts when the whole window resizes
+  window.addEventListener('resize', scheduleHeightUpdate);
+  setFolderHeight();
 });
 
 
@@ -114,132 +114,133 @@ FOCUS TIMER SECTION
 
 // Function to update the timer display
 function updateTimerDisplay() {
-    const minutes = Math.floor(timeRemaining / 60);
-    const seconds = timeRemaining % 60;
-    const timerDisplay = document.getElementById("timer-display");
-    timerDisplay.innerText = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-    updateCircleProgress();
-    updateFocusTimeDisplay(); // Update focus time continuously
+  const minutes = Math.floor(timeRemaining / 60);
+  const seconds = timeRemaining % 60;
+  const timerDisplay = document.getElementById("timer-display");
+  timerDisplay.innerText = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  updateCircleProgress();
+  updateFocusTimeDisplay(); // Update focus time continuously
 }
 
 // Function to start the timer
 function startTimer() {
-    if (timer) return; // Prevent starting a new timer if already running
-    isPaused = false;
-    sessionXpAwarded = false;
-    lastFocusUpdate = Date.now();
-    timer = setInterval(() => {
-        if (timeRemaining > 0) {
-            timeRemaining--;
-            if (!isBreak) {
-                const now = Date.now();
-                const delta = (now - lastFocusUpdate) / 1000; // Calculates time passed in seconds
-                totalFocusTime += delta; // Accumulate overall focus time
+  if (timer) return; // Prevent starting a new timer if already running
+  isPaused = false;
+  sessionXpAwarded = false;
+  lastFocusUpdate = Date.now();
+  timer = setInterval(() => {
+    if (timeRemaining > 0) {
+      timeRemaining--;
+      if (!isBreak) {
+        const now = Date.now();
+        const delta = (now - lastFocusUpdate) / 1000; // Calculates time passed in seconds
+        totalFocusTime += delta; // Accumulate overall focus time
 
-                // Updates weekly focus data for the current day
-                const currentDay = new Date().getDay();
-                weeklyFocusData[currentDay] += delta;
+        // Updates weekly focus data for the current day
+        const currentDay = new Date().getDay();
+        weeklyFocusData[currentDay] += delta;
 
-                lastFocusUpdate = now;
-                updateFocusChart(); // Refreshes the weekly focus chart with new data
-            }
-            updateTimerDisplay();
-        } else {
-            clearInterval(timer);
-            timer = null;
-            if (!isBreak) {
-                alert("Focus session complete! Time for a break.");
-                isBreak = true;
-                timeRemaining = breakTime;
-            } else {
-                alert("Break is over! Time to focus.");
-                isBreak = false;
-                timeRemaining = focusTime;
-            }
-            startTimer();
-        }
-    }, 1000);
+        lastFocusUpdate = now;
+        updateFocusChart(); // Refreshes the weekly focus chart with new data
+      }
+      updateTimerDisplay();
+    } else {
+      clearInterval(timer);
+      timer = null;
+      if (!isBreak) {
+        showAlert("Focus session complete! Time for a break.", "info");
+        isBreak = true;
+        timeRemaining = breakTime;
+      } else {
+        showAlert("Break is over! Time to focus.", "info");
+        isBreak = false;
+        timeRemaining = focusTime;
+      }
+      startTimer();
+    }
+  }, 1000);
 }
 
 // Function to pause the timer 
 function pauseTimer() {
-    if (timer && !isPaused) {
-        clearInterval(timer);
-        timer = null;
-        isPaused = true;
+  if (timer && !isPaused) {
+    clearInterval(timer);
+    timer = null;
+    isPaused = true;
 
-        if (!isBreak && !sessionXpAwarded) {
-            // Finalizes the last slice into totalFocusTime
-            const now = Date.now();
-            const deltaSeconds = (now - lastFocusUpdate) / 1000;
-            totalFocusTime += deltaSeconds;
-            updateFocusTimeDisplay();
-            lastFocusUpdate = now;
+    if (!isBreak && !sessionXpAwarded) {
+      // Finalizes the last slice into totalFocusTime
+      const now = Date.now();
+      const deltaSeconds = (now - lastFocusUpdate) / 1000;
+      totalFocusTime += deltaSeconds;
+      updateFocusTimeDisplay();
+      lastFocusUpdate = now;
 
-            // Computes full session length in seconds
-            const sessionSeconds = focusTime - timeRemaining;
+      // Computes full session length in seconds
+      const sessionSeconds = focusTime - timeRemaining;
 
-            // Awards 1 XP per full minute of that session
-            const xpEarned = Math.floor(sessionSeconds / 60);
-            if (xpEarned > 0) {
-                awardExp(xpEarned);
-                alert(`Session paused! You earned ${xpEarned} XP.`);
-            }
-            // Marks XP as awarded for this session slice
-            sessionXpAwarded = true;
-        }
+      // Awards 1 XP per full minute of that session
+      const xpEarned = Math.floor(sessionSeconds / 60);
+      if (xpEarned > 0) {
+        awardExp(xpEarned);
+        showAlert(`Session paused! You earned ${xpEarned} XP.`, "success");
+      }
+      // Marks XP as awarded for this session slice
+      sessionXpAwarded = true;
     }
+  }
 }
 
 // Function to reset the timer
 function resetTimer() {
-    // Only awards if not yet awarded in this session slice
-    if (!isBreak && !sessionXpAwarded) {
-        const sessionSeconds = focusTime - timeRemaining;
-        const xpEarned = Math.floor(sessionSeconds / 60);
-        if (xpEarned > 0) {
-            awardExp(xpEarned);
-            alert(`Timer reset! You earned ${xpEarned} XP.`);
-        }
-        sessionXpAwarded = true;
+  // Only awards if not yet awarded in this session slice
+  if (!isBreak && !sessionXpAwarded) {
+    const sessionSeconds = focusTime - timeRemaining;
+    const xpEarned = Math.floor(sessionSeconds / 60);
+    if (xpEarned > 0) {
+      awardExp(xpEarned);
+      showAlert(`Timer reset! You earned ${xpEarned} XP.`, "success");
     }
+    sessionXpAwarded = true;
+  }
 
-    // Reset logic
-    clearInterval(timer);
-    timer = null;
-    isPaused = false;
-    isBreak = false;
+  // Reset logic
+  clearInterval(timer);
+  timer = null;
+  isPaused = false;
+  isBreak = false;
 
-    focusTime = parseInt(document.getElementById("focus-input").value, 10) * 60;
-    breakTime = parseInt(document.getElementById("break-input").value, 10) * 60;
-    timeRemaining = focusTime;
-    totalFocusTime = 0;
+  focusTime = parseInt(document.getElementById("focus-input").value, 10) * 60;
+  breakTime = parseInt(document.getElementById("break-input").value, 10) * 60;
+  timeRemaining = focusTime;
+  totalFocusTime = 0;
 
-    updateTimerDisplay();
-    updateFocusTimeDisplay();
+  updateTimerDisplay();
+  updateFocusTimeDisplay();
+  showAlert("Timer has been reset.", "info");
 }
 
 // Function to update the total focus time display
 function updateFocusTimeDisplay() {
-    const totalFocusDisplay = document.getElementById("total-focus-time");
-    const hours = Math.floor(totalFocusTime / 3600);
-    const minutes = Math.floor((totalFocusTime % 3600) / 60);
-    totalFocusDisplay.innerText = `Total Focus Time: ${hours}h ${minutes}m`;
+  const totalFocusDisplay = document.getElementById("total-focus-time");
+  const hours = Math.floor(totalFocusTime / 3600);
+  const minutes = Math.floor((totalFocusTime % 3600) / 60);
+  totalFocusDisplay.innerText = `Total Focus Time: ${hours}h ${minutes}m`;
 }
 
 // Function to update circular progress
 function updateCircleProgress() {
-    const progressCircle = document.getElementById("progress-circle");
-    const radius = progressCircle.r.baseVal.value;
-    const circumference = 2 * Math.PI * radius;
-    const progress = 1 - (timeRemaining / (isBreak ? breakTime : focusTime)); // Flips progress calculation for clockwise motion
-    progressCircle.style.strokeDasharray = `${circumference}`;
-    progressCircle.style.strokeDashoffset = `${circumference * progress}`;
-    progressCircle.style.transform = "rotate(270deg) scale(1, -1)"; // Ensures proper clockwise motion starting from the top
-    progressCircle.style.transformOrigin = "center";
-    progressCircle.style.stroke = isBreak ? "green" : "blue"; // Change color based on session type
-    progressCircle.style.display = "block"; // Ensures proper centering
-    progressCircle.style.margin = "0 auto";
+  const progressCircle = document.getElementById("progress-circle");
+  const radius = progressCircle.r.baseVal.value;
+  const circumference = 2 * Math.PI * radius;
+  const progress = 1 - (timeRemaining / (isBreak ? breakTime : focusTime)); // Flips progress calculation for clockwise motion
+  progressCircle.style.strokeDasharray = `${circumference}`;
+  progressCircle.style.strokeDashoffset = `${circumference * progress}`;
+  progressCircle.style.transform = "rotate(270deg) scale(1, -1)"; // Ensures proper clockwise motion starting from the top
+  progressCircle.style.transformOrigin = "center";
+  progressCircle.style.stroke = isBreak ? "green" : "blue"; // Change color based on session type
+  progressCircle.style.display = "block"; // Ensures proper centering
+  progressCircle.style.margin = "0 auto";
 }
 
 // Attach event listeners to buttons
@@ -248,13 +249,13 @@ document.getElementById("pause-timer").addEventListener("click", pauseTimer);
 document.getElementById("reset-timer").addEventListener("click", resetTimer);
 
 document.getElementById("focus-input").addEventListener("change", () => {
-    focusTime = parseInt(document.getElementById("focus-input").value) * 60;
-    timeRemaining = focusTime;
-    updateTimerDisplay();
+  focusTime = parseInt(document.getElementById("focus-input").value) * 60;
+  timeRemaining = focusTime;
+  updateTimerDisplay();
 });
 
 document.getElementById("break-input").addEventListener("change", () => {
-    breakTime = parseInt(document.getElementById("break-input").value) * 60;
+  breakTime = parseInt(document.getElementById("break-input").value) * 60;
 });
 
 // Initializes the timer display
@@ -265,71 +266,98 @@ updateFocusTimeDisplay();
 /* WEEKLY FOCUSED TIME SECTION */
 
 let weeklyFocusData = {
-    0: 0,  // Sunday
-    1: 0,  // Monday
-    2: 0,  // Tuesday
-    3: 0,  // Wednesday
-    4: 0,  // Thursday
-    5: 0,  // Friday
-    6: 0   // Saturday
+  0: 0,  // Sunday
+  1: 0,  // Monday
+  2: 0,  // Tuesday
+  3: 0,  // Wednesday
+  4: 0,  // Thursday
+  5: 0,  // Friday
+  6: 0   // Saturday
 };
 
 // Updates the charts which show the total time spent focusing  
 function updateFocusChart() {
-    const ctx = document.getElementById('focusChart').getContext('2d');
-    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const ctx = document.getElementById('focusChart').getContext('2d');
+  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    const focusTimes = labels.map((_, index) => weeklyFocusData[index]);
+  // Raw seconds per day
+  const secs = labels.map((_, i) => weeklyFocusData[i] || 0);
+  const maxSec = Math.max(...secs, 10);
 
-    const focusTimesInMinutes = focusTimes.map(seconds => seconds / 60);
+  // Decides the tick step to use depending on the max value
+  let step = maxSec < 60 ? 10
+    : maxSec < 3600 ? 60
+      : 600;
 
-    if (focusChart) {
-        // Updates existing chart data
-        focusChart.data.datasets[0].data = focusTimesInMinutes;
-        focusChart.update();
-    } else {
-        // Creates the chart for the first time
-        focusChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Focus Time (minutes)',
-                    data: focusTimesInMinutes,
-                    backgroundColor: 'rgba(0, 102, 255, 0.8)',
-                    borderColor: 'rgba(0, 85, 204, 1)',
-                    borderWidth: 1,
-                    borderRadius: 10,
-                    barThickness: 40,
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            // Displays the y-axis in minutes
-                            callback: function (value) {
-                                return value + ' min';
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return context.parsed.y + ' min';
-                            }
-                        }
-                    },
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
+  const chartMax = step * Math.ceil(maxSec / step);
+
+  // Formats the chart labels: “Xs”, “Ym Zs”, or “Xh Ym”
+  const fmt = v => {
+    if (v < 60) return `${v}s`;
+    if (v < 3600) {
+      const m = Math.floor(v / 60), s = v % 60;
+      return s ? `${m}m ${s}s` : `${m}m`;
     }
+    const h = Math.floor(v / 3600);
+    const m = Math.floor((v % 3600) / 60);
+    return m ? `${h}h ${m}m` : `${h}h`;
+  };
+
+  // Converts the data to a format suitable for the chart
+  if (focusChart) {
+    focusChart.data.labels = labels;
+    focusChart.data.datasets[0].data = secs;
+    Object.assign(focusChart.options.scales.y, {
+      max: chartMax,
+      ticks: { stepSize: step, callback: fmt }
+    });
+    focusChart.update();
+    return;
+  }
+
+  focusChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Focused Time',
+        data: secs,
+        backgroundColor: 'rgba(0,102,255,0.8)',
+        borderColor: 'rgba(0,85,204,1)',
+        borderWidth: 1,
+        borderRadius: 10,
+        barThickness: 40
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: chartMax,
+          ticks: {
+            stepSize: step,
+            callback: fmt
+          },
+          grid: { color: 'rgba(255,255,255,0.1)' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: {
+            font: { size: 14, weight: 'bold', family: 'Inter, sans-serif' },
+            color: '#A0AEC0'
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => fmt(ctx.parsed.y)
+          }
+        }
+      }
+    }
+  });
 }
 
 /*
@@ -345,87 +373,87 @@ let lastActiveTime = Date.now();
 
 // List of applications to exclude from tracking
 const excludedApps = [
-    "Windows Shell Experience Host",
-    "SearchHost.exe",
-    "Electron",
-    "RuntimeBroker.exe",
-    "Application Frame Host",
-    "LockApp.exe",
-    "ShellHost.exe"
+  "Windows Shell Experience Host",
+  "SearchHost.exe",
+  "Electron",
+  "RuntimeBroker.exe",
+  "Application Frame Host",
+  "LockApp.exe",
+  "ShellHost.exe"
 ];
 
 // Function to format application names
 function formatAppName(appName) {
-    if (!appName) return "Unknown";
+  if (!appName) return "Unknown";
 
-    // Remove .exe extension
-    let formattedName = appName.replace(/\.exe$/i, "");
+  // Remove .exe extension
+  let formattedName = appName.replace(/\.exe$/i, "");
 
-    // Capitalize first letter
-    formattedName = formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
+  // Capitalize first letter
+  formattedName = formattedName.charAt(0).toUpperCase() + formattedName.slice(1);
 
-    return formattedName;
+  return formattedName;
 }
 
 // Function to format time in HH:MM:SS
 function formatTime(seconds) {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 // Function to update the application usage list in the UI
 function renderAppUsage() {
-    const appList = document.getElementById("app-usage-list");
-    appList.innerHTML = Object.entries(appUsageData)
-        .filter(([app]) => !excludedApps.includes(app)) // Exclude unwanted apps
-        .map(([app, data]) => {
-            const { time, icon } = data;
-            const displayName = formatAppName(app);
+  const appList = document.getElementById("app-usage-list");
+  appList.innerHTML = Object.entries(appUsageData)
+    .filter(([app]) => !excludedApps.includes(app)) // Exclude unwanted apps
+    .map(([app, data]) => {
+      const { time, icon } = data;
+      const displayName = formatAppName(app);
 
-            return `
+      return `
                 <li style="display: flex; justify-content: center; gap: 10px;">
                     ${icon ? `<img src="${icon}" alt="${displayName}" width="24" height="24" onerror="this.style.display='none';">` : ''}
                     <strong>${displayName}</strong>: ${formatTime(time)}
                 </li>
             `;
-        })
-        .join("");
+    })
+    .join("");
 }
 
 // Function to track active applications continuously
 async function trackApplicationUsage() {
-    const now = Date.now();
+  const now = Date.now();
 
-    // Fetch the currently active application
-    const activeApp = await window.appTracker.getActiveApplication();
-    if (!activeApp) return;
+  // Fetch the currently active application
+  const activeApp = await window.appTracker.getActiveApplication();
+  if (!activeApp) return;
 
-    let { name: appName, icon } = activeApp;
+  let { name: appName, icon } = activeApp;
 
-    if (!appName || excludedApps.includes(appName)) return; // Skip excluded apps
+  if (!appName || excludedApps.includes(appName)) return; // Skip excluded apps
 
-    appName = formatAppName(appName);
+  appName = formatAppName(appName);
 
-    // Updates time spent on the last active app
-    if (lastActiveApp) {
-        const elapsedTime = Math.round((now - lastActiveTime) / 1000);
-        if (!appUsageData[lastActiveApp]) {
-            appUsageData[lastActiveApp] = { time: 0, icon: null };
-        }
-        appUsageData[lastActiveApp].time += elapsedTime;
+  // Updates time spent on the last active app
+  if (lastActiveApp) {
+    const elapsedTime = Math.round((now - lastActiveTime) / 1000);
+    if (!appUsageData[lastActiveApp]) {
+      appUsageData[lastActiveApp] = { time: 0, icon: null };
     }
+    appUsageData[lastActiveApp].time += elapsedTime;
+  }
 
-    // Stores the icon only when first tracking the app
-    if (!appUsageData[appName]) {
-        appUsageData[appName] = { time: 0, icon: icon };
-    }
+  // Stores the icon only when first tracking the app
+  if (!appUsageData[appName]) {
+    appUsageData[appName] = { time: 0, icon: icon };
+  }
 
-    lastActiveApp = appName;
-    lastActiveTime = now;
-    renderAppUsage();
-    updateChart();
+  lastActiveApp = appName;
+  lastActiveTime = now;
+  renderAppUsage();
+  updateChart();
 }
 
 // Call `trackApplicationUsage` every second
@@ -435,93 +463,93 @@ setInterval(trackApplicationUsage, 1000);
 let appUsageChart = null; // Stores the chart instance
 
 function updateChart() {
-    const ctx = document.getElementById('appUsageChart').getContext('2d');
+  const ctx = document.getElementById('appUsageChart').getContext('2d');
 
-    // Gets sorted application data (Top 5 only)
-    const sortedApps = Object.entries(appUsageData)
-        .sort((a, b) => b[1].time - a[1].time) // Sort by highest time spent
-        .slice(0, 5);
+  // Gets sorted application data (Top 5 only)
+  const sorted = Object.entries(appUsageData)
+    .sort((a, b) => b[1].time - a[1].time)
+    .slice(0, 5);
 
-    const labels = sortedApps.map(([app]) => app);
-    const times = sortedApps.map(([_, data]) => data.time);
-    const maxTime = Math.max(...times, 10); // Ensures minimum value for y-axis
+  const labels = sorted.map(([app]) => app);
+  const times = sorted.map(([_, d]) => d.time);
+  const maxSec = Math.max(...times, 1);
+  // Decides the tick step to use depending on the max value
+  let step = maxSec < 60 ? 10
+    : maxSec < 3600 ? 60
+      : 600;
 
-    if (appUsageChart) {
-        // Smoothly updates the chart with up anim
-        appUsageChart.data.labels = labels;
-        appUsageChart.data.datasets[0].data = times;
-        appUsageChart.options.scales.y.max = maxTime;
-        appUsageChart.update();
-        return;
+  // Rounds up the max value to the next step
+  const chartMax = step * Math.ceil(maxSec / step);
+
+  // Formats the chart labels: “Xs”, “Ym Zs”, or “Xh Ym”
+  const fmt = v => {
+    if (v < 60) return `${v}s`;
+    if (v < 3600) {
+      const m = Math.floor(v / 60), s = v % 60;
+      return s ? `${m}m ${s}s` : `${m}m`;
     }
+    const h = Math.floor(v / 3600);
+    const m = Math.floor((v % 3600) / 60);
+    return m ? `${h}h ${m}m` : `${h}h`;
+  };
 
-    // Create a new bar chart
-    appUsageChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Time Spent (seconds)',
-                data: times,
-                backgroundColor: 'rgba(0, 102, 255, 0.8)',
-                borderColor: 'rgba(0, 85, 204, 1)',
-                borderWidth: 1,
-                borderRadius: 10,
-                barThickness: 100,
-                maxBarThickness: 120
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: {
-                duration: 600,
-                easing: 'easeOutExpo'
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: maxTime,
-                    ticks: {
-                        font: {
-                            size: 14,
-                            weight: "bold",
-                            family: 'Inter, sans-serif'
-                        },
-                        color: '#A0AEC0'
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                },
-                x: {
-                    ticks: {
-                        font: {
-                            size: 16,
-                            weight: "bold",
-                            family: 'Inter, sans-serif'
-                        },
-                        color: '#A0AEC0'
-                    },
-                    grid: {
-                        display: false
-                    },
-                    barPercentage: 0.85,
-                    categoryPercentage: 0.9
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    enabled: true,
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    bodyFont: { family: 'Inter, sans-serif', size: 14 },
-                    padding: 10,
-                    borderRadius: 8
-                }
-            }
-        }
+  // 5) Updates/ creates chart
+  if (appUsageChart) {
+    appUsageChart.data.labels = labels;
+    appUsageChart.data.datasets[0].data = times;
+    Object.assign(appUsageChart.options.scales.y, {
+      max: chartMax,
+      ticks: { stepSize: step, callback: fmt }
     });
+    appUsageChart.update();
+    return;
+  }
+
+  appUsageChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Time Spent',
+        data: times,
+        backgroundColor: 'rgba(0,102,255,0.8)',
+        borderColor: 'rgba(0,85,204,1)',
+        borderWidth: 1,
+        borderRadius: 10,
+        barThickness: 100
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: chartMax,
+          ticks: {
+            stepSize: step,
+            callback: fmt
+          },
+          grid: { color: 'rgba(255,255,255,0.1)' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: {
+            font: { size: 16, weight: 'bold', family: 'Inter, sans-serif' },
+            color: '#A0AEC0'
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: ctx => fmt(ctx.parsed.y)
+          }
+        },
+        legend: { display: false }
+      }
+    }
+  });
 }
 
 /*
@@ -536,20 +564,20 @@ let currentFolder = null; // Tracks the currently selected folder
 
 // Function to render folder list
 function renderFolders() {
-    const folderContainer = document.getElementById("folders-container");
+  const folderContainer = document.getElementById("folders-container");
 
-    // Stores which folders are open
-    const openFolders = {};
-    document.querySelectorAll(".collapse[open]").forEach((el) => {
-        openFolders[el.getAttribute("data-folder")] = true;
-    });
+  // Stores which folders are open
+  const openFolders = {};
+  document.querySelectorAll(".collapse[open]").forEach((el) => {
+    openFolders[el.getAttribute("data-folder")] = true;
+  });
 
-    folderContainer.innerHTML = Object.keys(folders)
-        .map(folder => {
-            // Auto capitalize folder name
-            const formattedFolder = folder.charAt(0).toUpperCase() + folder.slice(1).toLowerCase();
+  folderContainer.innerHTML = Object.keys(folders)
+    .map(folder => {
+      // Auto capitalize folder name
+      const formattedFolder = folder.charAt(0).toUpperCase() + folder.slice(1).toLowerCase();
 
-            return `
+      return `
             <details class="collapse bg-base-100 rounded-lg shadow-md p-3" data-folder="${folder}" ${openFolders[folder] ? "open" : ""}>
                 <summary class="collapse-title text-lg font-semibold flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" style="width: 20px; height: 20px;" class="inline-block flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -579,31 +607,31 @@ function renderFolders() {
                 </div>
             </details>
             `;
-        })
-        .join("");
+    })
+    .join("");
 
-    // Prevents collapse from closing when clicking task buttons
-    document.querySelectorAll(".task-btn").forEach(button => {
-        button.addEventListener("click", (event) => {
-            event.stopPropagation(); // Prevents collapse from closing
-            const folder = event.target.getAttribute("data-folder");
-            const index = event.target.getAttribute("data-index");
-            toggleTaskCompletion(folder, index);
-        });
+  // Prevents collapse from closing when clicking task buttons
+  document.querySelectorAll(".task-btn").forEach(button => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation(); // Prevents collapse from closing
+      const folder = event.target.getAttribute("data-folder");
+      const index = event.target.getAttribute("data-index");
+      toggleTaskCompletion(folder, index);
     });
+  });
 }
 
 // Function to render tasks in the current folder
 function renderTasks() {
-    const taskList = document.getElementById("task-list");
-    if (!currentFolder) {
-        taskList.innerHTML = "<p>Please select a folder to view tasks.</p>";
-        return;
-    }
-    const tasks = folders[currentFolder];
-    taskList.innerHTML = tasks
-        .map(
-            (task, index) => `
+  const taskList = document.getElementById("task-list");
+  if (!currentFolder) {
+    taskList.innerHTML = "<p>Please select a folder to view tasks.</p>";
+    return;
+  }
+  const tasks = folders[currentFolder];
+  taskList.innerHTML = tasks
+    .map(
+      (task, index) => `
         <li>
             <span style="text-decoration: ${task.completed ? "line-through" : "none"}">
                 ${task.title}
@@ -613,60 +641,63 @@ function renderTasks() {
             </button>
         </li>
         `
-        )
-        .join("");
+    )
+    .join("");
 }
 
 // Function to add a folder
 function addFolder() {
-    const folderName = document.getElementById("folder-name").value.trim();
-    if (!folderName) {
-        alert("Folder name cannot be empty.");
-        return;
-    }
-    if (folders[folderName]) {
-        alert("Folder already exists.");
-        return;
-    }
-    folders[folderName] = [];
-    document.getElementById("folder-name").value = ""; // Clear input
-    renderFolders();
+  const folderName = document.getElementById("folder-name").value.trim();
+
+  if (!folderName) {
+    showAlert("Folder name cannot be empty", "error");
+    return;
+  }
+  if (folders[folderName]) {
+    showAlert("That folder already exists", "warning");
+    return;
+  }
+  folders[folderName] = [];
+  document.getElementById("folder-name").value = "";
+
+  renderFolders();
+  showAlert(`Folder "${folderName}" added!`, "success");
 }
 
 // Function to add a task to the current folder
 function addTask(folder) {
-    const taskInput = document.getElementById(`task-input-${folder}`);
-    const taskTitle = taskInput.value.trim();
-    if (!taskTitle) {
-        alert("Task title cannot be empty.");
-        return;
-    }
-    folders[folder].push({ title: taskTitle, completed: false });
-    taskInput.value = "";
-    renderFolders();
+  const taskInput = document.getElementById(`task-input-${folder}`);
+  const taskTitle = taskInput.value.trim();
+  if (!taskTitle) {
+    showAlert("Task cannot be empty", "error");
+    return;
+  }
+  folders[folder].push({ title: taskTitle, completed: false });
+  taskInput.value = "";
+  renderFolders();
 }
 
 // Function to toggle task completion
 function toggleTaskCompletion(folder, taskIndex) {
-    const task = folders[folder][taskIndex];
-    // Checks if the task is being marked complete (as opposed to being undone)
-    const wasIncomplete = !task.completed;
-    task.completed = !task.completed;
-    renderFolders();
+  const task = folders[folder][taskIndex];
+  // Checks if the task is being marked complete (as opposed to being undone)
+  const wasIncomplete = !task.completed;
+  task.completed = !task.completed;
+  renderFolders();
 
-    // Awards EXP only if the task was completed
-    if (wasIncomplete && task.completed) {
-        awardExp(20);
-        totalTasksCompleted++;
-        updateProfileUI();
-    }
+  // Awards EXP only if the task was completed
+  if (wasIncomplete && task.completed) {
+    awardExp(20);
+    totalTasksCompleted++;
+    updateProfileUI();
+  }
 }
 
 // Function to select a folder
 function selectFolder(folder) {
-    currentFolder = folder;
-    document.getElementById("current-folder").innerText = folder;
-    renderTasks();
+  currentFolder = folder;
+  document.getElementById("current-folder").innerText = folder;
+  renderTasks();
 }
 
 // Initial Render
@@ -685,91 +716,117 @@ const expThreshold = 100; // EXP needed to level up
 
 // Awards EXP and Handles level Up 
 function awardExp(points) {
-    userExp += points;
-    if (userExp >= expThreshold) {
-        userExp -= expThreshold;
-        userLevel++;
-        showLevelUpAnimation();
-    }
-    updateLevelUI();
-    updateRewardsUI();
-    updateProfileUI();
-    showExpAnimation(points);
+  userExp += points;
+  if (userExp >= expThreshold) {
+    userExp -= expThreshold;
+    userLevel++;
+    showLevelUpAnimation();
+  }
+  updateLevelUI();
+  updateRewardsUI();
+  updateProfileUI();
+  showExpAnimation(points);
 }
 
-// UI update for level progress bar
+// UI update for circular progress bar
 function updateLevelUI() {
-    const expBar = document.getElementById('exp-progress');
-    const levelBadge = document.getElementById('level-badge');
-    if (expBar && levelBadge) {
-        expBar.value = userExp;
-        expBar.max = expThreshold;
-        levelBadge.innerText = 'Level ' + userLevel;
-    }
+  const expProgressCircle = document.getElementById('exp-progress-circle');
+  const expProgressLevel = document.getElementById('exp-progress-level');
+
+  if (expProgressCircle && expProgressLevel) {
+    const expPercent = Math.round((userExp / expThreshold) * 100);
+    expProgressCircle.style.setProperty('--value', expPercent);
+    expProgressLevel.innerText = `Level ${userLevel}`;
+  }
+
+  const profExp = document.getElementById('profile-exp-progress');
+  const xpNext = document.getElementById('xp-to-next');
+  const profLevel = document.getElementById('profile-level');
+
+  if (profExp && xpNext && profLevel) {
+    profExp.value = userExp;
+    profExp.max = expThreshold;
+    xpNext.innerText = (expThreshold - userExp) + ' XP to next level';
+    profLevel.innerText = userLevel;
+  }
 }
 
 // Creates level up animation
 function showLevelUpAnimation() {
-    // Creates and styles the banner
-    const el = document.createElement('div');
-    el.innerText = 'LEVEL UP!';
-    Object.assign(el.style, {
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%) scale(0)',
-        fontSize: '3rem',
-        fontWeight: 'bold',
-        color: '#4ade80',
-        textShadow: '0 0 8px rgba(74,210,84,0.7)',
-        opacity: '0',
-        pointerEvents: 'none',
-        zIndex: '999',
-    });
-    document.body.appendChild(el);
+  const el = document.createElement('div');
+  el.innerText = 'LEVEL UP!';
 
-    // Adds confetti animation
-    confetti({ particleCount: 30, spread: 60, origin: { x: 0.5, y: 0.4 } });
+  // Random position near center
+  const randomOffsetX = (Math.random() - 0.5) * 150;
+  const randomOffsetY = (Math.random() - 0.5) * 75;
 
-    // 3) Fading in and out text animation
-    el.animate([
-        { transform: 'translate(-50%, -50%) scale(0)', opacity: 0 },
-        { transform: 'translate(-50%, -50%) scale(1.2)', opacity: 1, offset: 0.4 },
-        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.6 },
-        { transform: 'translate(-50%, -50%) scale(1)', opacity: 0 },
-    ], {
-        duration: 4000,
-        easing: 'cubic-bezier(0.22,1,0.36,1)'
-    }).onfinish = () => el.remove();
+  // Slight random rotation
+  const randomRotation = (Math.random() - 0.5) * 16;
+
+  Object.assign(el.style, {
+    position: 'fixed',
+    top: `calc(50% + ${randomOffsetY}px)`,
+    left: `calc(50% + ${randomOffsetX}px)`,
+    transform: `translate(-50%, -50%) rotate(${randomRotation}deg) scale(0)`,
+    fontSize: '4rem',
+    fontWeight: '900',
+    color: '#4ade80',
+    textShadow: '0 0 12px rgba(74, 222, 128, 0.9)',
+    opacity: '0',
+    pointerEvents: 'none',
+    zIndex: '999',
+  });
+  document.body.appendChild(el);
+  // Adds confetti animation
+  confetti({ particleCount: 60, spread: 80, origin: { x: 0.5, y: 0.4 } });
+
+  // 3) Fading in and out text animation
+  el.animate([
+    { transform: `translate(-50%, -50%) rotate(${randomRotation}deg) scale(0)`, opacity: 0 },
+    { transform: `translate(-50%, -50%) rotate(${randomRotation}deg) scale(1.4)`, opacity: 1, offset: 0.4 },
+    { transform: `translate(-50%, -50%) rotate(${randomRotation}deg) scale(1.1)`, opacity: 1, offset: 0.7 },
+    { transform: `translate(-50%, -50%) rotate(${randomRotation}deg) scale(1.1)`, opacity: 0 },
+  ], {
+    duration: 4000,
+    easing: 'cubic-bezier(0.22,1,0.36,1)'
+  }).onfinish = () => el.remove();
 }
 
 // Creates exp animation
 function showExpAnimation(amount) {
-    const el = document.createElement('div');
-    el.innerText = `+${amount} XP!`;
-    Object.assign(el.style, {
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        fontSize: '2rem',
-        fontWeight: 'bold',
-        color: '#FFD700',
-        textShadow: '0 0 10px rgba(29, 45, 190, 0.7)',
-        opacity: '1',
-        pointerEvents: 'none',
-        zIndex: 998,
-    });
-    document.body.appendChild(el);
+  const el = document.createElement('div');
+  el.innerText = `+${amount} XP!`;
 
-    // Animates the exp text up and then fades it out
-    el.animate([
-        { transform: 'translate(-50%, -50%)', opacity: 1 },
-        { transform: 'translate(-50%, -150%)', opacity: 0 }
-    ], {
-        duration: 1000,
-        easing: 'ease-out',
-    }).onfinish = () => el.remove();
+  // Generates random position near the middle
+  const randomOffsetX = (Math.random() - 0.5) * 200;
+  const randomOffsetY = (Math.random() - 0.5) * 100;
+
+  // Generates random rotation
+  const randomRotation = (Math.random() - 0.5) * 40;
+
+  Object.assign(el.style, {
+    position: 'fixed',
+    top: `calc(50% + ${randomOffsetY}px)`,
+    left: `calc(50% + ${randomOffsetX}px)`,
+    transform: `translate(-50%, -50%) rotate(${randomRotation}deg)`,
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textShadow: '0 0 10px rgba(29, 45, 190, 0.7)',
+    opacity: '1',
+    pointerEvents: 'none',
+    zIndex: 998,
+  });
+  document.body.appendChild(el);
+
+  // Animates the exp text up and then fades it out
+  el.animate([
+    { transform: `translate(-50%, -50%) rotate(${randomRotation}deg)`, opacity: 1 },
+    { transform: `translate(-50%, -150%) rotate(${randomRotation}deg)`, opacity: 0 }
+  ], {
+    duration: 1000,
+    easing: 'ease-out',
+  }).onfinish = () => el.remove();
 }
 
 /*
@@ -779,35 +836,73 @@ DISTRACTING APPS SECTION
 */
 
 // Renders and shows the list of distracting apps 
-function renderDistractingApps(appList = ['Notepad']) {
-    const listElement = document.getElementById('distracting-app-list');
-    listElement.innerHTML = appList.map(app => `<li>${app}</li>`).join('');
+function renderDistractingApps(appList = []) {
+  const listElement = document.getElementById('distracting-app-list');
+  listElement.innerHTML = appList
+    .map(app => `
+        <li class="flex items-center justify-between gap-4 py-1">
+          <span>${app}</span>
+          <button class="btn btn-xs btn-error" data-app="${app}">Remove</button>
+        </li>
+      `).join('');
+
+  // Adds event listeners to each remove button
+  listElement.querySelectorAll('button[data-app]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.getAttribute('data-app');
+      removeDistractingApp(name);
+    });
+  });
 }
 
 // Fetches the global data
 window.globalDataAPI.getGlobalData().then(data => {
-    renderDistractingApps(data.distractingApps);
+  renderDistractingApps(data.distractingApps);
 });
 
 // Listens for updates broadcast from the main process
 window.globalDataAPI.onGlobalDataUpdate((data) => {
-    renderDistractingApps(data.distractingApps);
+  renderDistractingApps(data.distractingApps);
 });
 
-// Function to add a distracting ap by user
+// Function to add a distracting app by user
 async function addDistractingApp() {
-    const input = document.getElementById('distracting-app-input');
-    const appName = input.value.trim();
-    if (appName) {
-        const updatedData = await window.globalDataAPI.addDistractingApp(appName);
-        // Render the updated list
-        renderDistractingApps(updatedData.distractingApps);
-        input.value = '';
-    } else {
-        alert('App already listed or invalid input.');
-    }
+  const input = document.getElementById('distracting-app-input');
+  const appName = input.value.trim();
+  if (!appName) {
+    showAlert('Please enter an app name.', 'error');
+    return;
+  }
+
+  // Checks if the app is already in the list
+  const existing = Array.from(
+    document.querySelectorAll('#distracting-app-list li span')
+  ).map(sp => sp.textContent.trim().toLowerCase());
+  if (existing.includes(appName.toLowerCase())) {
+    showAlert(`App "${appName}" is already in the list.`, 'warning');
+    return;
+  }
+
+  try {
+    const updatedData = await window.globalDataAPI.addDistractingApp(appName);
+    renderDistractingApps(updatedData.distractingApps);
+    input.value = '';
+    showAlert(`Distracting app "${appName}" added!`, 'success');
+  } catch {
+    showAlert('Failed to add app. Please try again.', 'error');
+  }
 }
 
+// Lets user remove a distracting app
+async function removeDistractingApp(appName) {
+  try {
+    const updatedData = await window.globalDataAPI.removeDistractingApp(appName);
+    renderDistractingApps(updatedData.distractingApps);
+    showAlert(`Removed "${appName}" from the list.`, 'info');
+  } catch {
+    showAlert(`Could not remove "${appName}".`, 'error');
+  }
+}
 // Initial render
 renderDistractingApps();
 
@@ -820,8 +915,8 @@ LEADERBOARD & REWARDS HUB
 
 // Rewards hub setup
 function updateRewardsUI() {
-    // Lock icon for locked themes
-    const LOCK_SVG = `
+  // Lock icon for locked themes
+  const LOCK_SVG = `
       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none"
            viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -830,91 +925,154 @@ function updateRewardsUI() {
               d="M7 11V7a5 5 0 1110 0v4"/>
       </svg>`;
 
-    const container = document.getElementById('themes-container');
-    if (!container) return;  // Page might not have loaded the section yet
-    container.innerHTML = '';
+  const container = document.getElementById('themes-container');
+  if (!container) return;  // Page might not have loaded the section yet
+  container.innerHTML = '';
 
-    // Adds each theme to the container
-    themes.forEach(({ name, level }) => {
-        const unlocked = userLevel >= level;
-        const btn = document.createElement('button');
-        btn.className = [
-            'btn btn-outline w-full',
-            'text-sm sm:text-base py-3 px-4',
-            'flex justify-between items-center',
-            unlocked ? '' : 'opacity-50 pointer-events-none'
-        ].join(' ');
-        btn.innerHTML = `
+  // Adds each theme to the container
+  themes.forEach(({ name, level }) => {
+    const unlocked = userLevel >= level;
+    const btn = document.createElement('button');
+    btn.className = [
+      'btn btn-outline w-full',
+      'text-sm sm:text-base py-3 px-4',
+      'flex justify-between items-center',
+      unlocked ? '' : 'opacity-50 pointer-events-none'
+    ].join(' ');
+    btn.innerHTML = `
         <span class="capitalize">
           ${name} <small class="text-xs text-gray-400">Lv ${level}</small>
         </span>
         ${unlocked ? '' : LOCK_SVG}
       `;
-        if (unlocked) {
-            btn.addEventListener('click', () => {
-                document.documentElement.setAttribute('data-theme', name);
-                localStorage.setItem('theme', name);
-            });
-        }
-        container.appendChild(btn);
-    });
+    if (unlocked) {
+      btn.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', name);
+        localStorage.setItem('theme', name);
+      });
+    }
+    container.appendChild(btn);
+  });
 }
 
 // Updates user profile
 function updateProfileUI() {
-    const expBar = document.getElementById('exp-progress');
-    const levelBadge = document.getElementById('level-badge');
-    if (expBar && levelBadge) {
-        expBar.value = userExp;
-        expBar.max = expThreshold;
-        levelBadge.innerText = 'Level ' + userLevel;
-    }
+  const expBar = document.getElementById('exp-progress');
+  const levelBadge = document.getElementById('level-badge');
+  if (expBar && levelBadge) {
+    expBar.value = userExp;
+    expBar.max = expThreshold;
+    levelBadge.innerText = 'Level ' + userLevel;
+  }
 
-    // Profile‑card elements
-    const profLevel = document.getElementById('profile-level');
-    const profExp = document.getElementById('profile-exp-progress');
-    const xpNext = document.getElementById('xp-to-next');
-    const focusH = document.getElementById('focus-hours-week');
-    const tasksEl = document.getElementById('tasks-completed');
-    const streakEl = document.getElementById('focus-streak');
+  // Profile‑card elements
+  const profLevel = document.getElementById('profile-level');
+  const profExp = document.getElementById('profile-exp-progress');
+  const xpNext = document.getElementById('xp-to-next');
+  const focusH = document.getElementById('focus-hours-week');
+  const tasksEl = document.getElementById('tasks-completed');
+  const streakEl = document.getElementById('focus-streak');
 
-    if (profLevel) profLevel.innerText = userLevel;
+  if (profLevel) profLevel.innerText = userLevel;
 
-    if (profExp && xpNext) {
-        profExp.value = userExp;
-        profExp.max = expThreshold;
-        xpNext.innerText = (expThreshold - userExp) + ' XP to next level';
-    }
+  if (profExp && xpNext) {
+    profExp.value = userExp;
+    profExp.max = expThreshold;
+    xpNext.innerText = (expThreshold - userExp) + ' XP to next level';
+  }
 
-    if (focusH) {
-        const weekSecs = Object.values(weeklyFocusData).reduce((a, b) => a + b, 0);
-        const hrs = Math.floor(weekSecs / 3600);
-        const mins = Math.floor((weekSecs % 3600) / 60);
-        focusH.innerText = `${hrs} h ${mins} m`;
-    }
-    let streak = getCurrentStreak();
-    if (tasksEl) tasksEl.innerText = totalTasksCompleted;
-    if (streakEl) streakEl.innerText = `${streak} day${streak === 1 ? '' : 's'}`;
+  if (focusH) {
+    const weekSecs = Object.values(weeklyFocusData).reduce((a, b) => a + b, 0);
+    const hrs = Math.floor(weekSecs / 3600);
+    const mins = Math.floor((weekSecs % 3600) / 60);
+    focusH.innerText = `${hrs} h ${mins} m`;
+  }
+  let streak = getCurrentStreak();
+  if (tasksEl) tasksEl.innerText = totalTasksCompleted;
+  if (streakEl) streakEl.innerText = `${streak} day${streak === 1 ? '' : 's'}`;
 
-    // Shows unlocked themes 
-    const profileContainer = document.getElementById('profile-themes');
-    if (profileContainer) {
-        profileContainer.innerHTML = themes
-            .filter(t => userLevel >= t.level)
-            .map(t => `<span class="badge badge-primary capitalize">${t.name}</span>`)
-            .join('');
-    }
+  // Shows unlocked themes 
+  const profileContainer = document.getElementById('profile-themes');
+  if (profileContainer) {
+    profileContainer.innerHTML = themes
+      .filter(t => userLevel >= t.level)
+      .map(t => `<span class="badge badge-primary capitalize">${t.name}</span>`)
+      .join('');
+  }
 }
 
 // Calculates the current streak of focus days
 function getCurrentStreak() {
-    const today = new Date().getDay();
-    let streak = 0;
-    for (let i = 0; i < 7; i++) {
-        const d = (today - i + 7) % 7;
-        if (weeklyFocusData[d] > 0) streak++;
-        else break;
-    }
-    return streak;
+  const today = new Date().getDay();
+  let streak = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = (today - i + 7) % 7;
+    if (weeklyFocusData[d] > 0) streak++;
+    else break;
+  }
+  return streak;
 }
 
+/* NOTIFICATION SECTION   */
+function showAlert(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('alert-container');
+  if (!container) return;
+
+  const MAX_ALERTS = 5;
+  // If already at max, removes the oldest notif
+  if (container.childElementCount >= MAX_ALERTS) {
+    container.removeChild(container.firstChild);
+  }
+
+  // Icons for each alert type
+  const icons = {
+    success: `<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>`,
+    error: `<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 14L14 10M10 10l4 4"/><circle cx="12" cy="12" r="9"/>
+                </svg>`,
+    warning: `<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 3a9 9 0 100 18 9 9 0 000-18z"/>
+                </svg>`,
+    info: `<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m0-4h.01"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2a10 10 0 11-10 10A10 10 0 0112 2z"/>
+                </svg>`
+  };
+
+  // Colors for each alert type
+  let bgClass;
+  switch (type) {
+    case 'error':
+      bgClass = 'bg-red-500';
+      break;
+    case 'warning':
+      bgClass = 'bg-yellow-500';
+      break;
+    case 'success':
+      bgClass = 'bg-green-500';
+      break;
+    default:
+      bgClass = 'bg-blue-500';
+  }
+
+  const alertEl = document.createElement('div');
+  alertEl.setAttribute('role', 'alert');
+  alertEl.className = [
+    'alert',
+    bgClass,
+    'text-black',
+    'shadow-lg',
+    'pointer-events-auto'
+  ].join(' ');
+
+  alertEl.innerHTML = `
+      <div class="flex items-center space-x-2">
+        ${icons[type] || icons.info}
+        <span>${message}</span>
+      </div>
+    `;
+
+  container.appendChild(alertEl);
+  setTimeout(() => alertEl.remove(), duration);
+}

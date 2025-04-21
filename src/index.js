@@ -93,7 +93,10 @@ async function updateOverlayBounds(win) {
     const dipH = Math.round(height / scaleFactor);
     win.setBounds({ x: dipX, y: dipY, width: dipW, height: dipH });
     const activeAppName = winInfo.owner.name.replace('.exe', '').trim();
-    if (globalData.distractingApps.includes(activeAppName)) win.show();
+    const isDistracting = globalData.distractingApps
+      .some(app => app.toLowerCase() === activeAppName.toLowerCase());
+
+    if (isDistracting) win.show();
     else win.hide();
   } catch (err) {
     console.error('Error updating overlay bounds:', err);
@@ -126,7 +129,10 @@ app.whenReady().then(() => {
     if (!overlayWindow || overlayWindow.isDestroyed()) return;
     const info = await activeWin();
     const name = info?.owner?.name.replace('.exe', '').trim();
-    if (globalData.distractingApps.includes(name)) overlayWindow.show();
+    const isDistracting = globalData.distractingApps
+      .some(app => app.toLowerCase() === name.toLowerCase());
+
+    if (isDistracting) overlayWindow.show();
     else overlayWindow.hide();
   }, 1000);
 });
@@ -140,7 +146,7 @@ app.on('window-all-closed', () => {
 // IPC handlers for window controls
 ipcMain.on('win-minimise', () => BrowserWindow.getFocusedWindow()?.minimize());
 ipcMain.on('win-maximise', () => BrowserWindow.getFocusedWindow()?.maximize());
-ipcMain.on('win-close',    () => BrowserWindow.getFocusedWindow()?.close());
+ipcMain.on('win-close', () => BrowserWindow.getFocusedWindow()?.close());
 ipcMain.on('win-toggle-max', () => {
   const win = BrowserWindow.getFocusedWindow();
   if (!win) return;
@@ -150,9 +156,27 @@ ipcMain.on('win-toggle-max', () => {
 // IPC handlers for global data
 ipcMain.handle('get-global-data', () => globalData);
 ipcMain.handle('add-distracting-app', (event, appName) => {
-  if (appName && !globalData.distractingApps.includes(appName)) {
+  if (
+    appName &&
+    !globalData.distractingApps.some(
+      app => app.toLowerCase() === appName.toLowerCase()
+    )
+  ) {
     globalData.distractingApps.push(appName);
-    BrowserWindow.getAllWindows().forEach(w => w.webContents.send('global-data-updated', globalData));
+    BrowserWindow.getAllWindows().forEach(w =>
+      w.webContents.send('global-data-updated', globalData)
+    );
+  }
+  return globalData;
+});
+
+// IPC handler to remove a distracting app
+ipcMain.handle('remove-distracting-app', (event, appName) => {
+  if (appName && globalData.distractingApps.includes(appName)) {
+    globalData.distractingApps = globalData.distractingApps.filter(a => a !== appName);
+    BrowserWindow.getAllWindows().forEach(w =>
+      w.webContents.send('global-data-updated', globalData)
+    );
   }
   return globalData;
 });

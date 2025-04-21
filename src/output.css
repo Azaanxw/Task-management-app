@@ -1200,6 +1200,12 @@
   .relative {
     position: relative;
   }
+  .sticky {
+    position: sticky;
+  }
+  .top-0 {
+    top: calc(var(--spacing) * 0);
+  }
   .top-\[1px\] {
     top: 1px;
   }
@@ -1214,6 +1220,9 @@
     .dock-label {
       font-size: 0.6875rem;
     }
+  }
+  .z-50 {
+    z-index: 50;
   }
   .stat-figure {
     grid-column-start: 2;
@@ -1576,6 +1585,11 @@
   .self-center {
     align-self: center;
   }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .overflow-auto {
     overflow: auto;
   }
@@ -1585,8 +1599,15 @@
   .rounded-lg {
     border-radius: var(--radius-lg);
   }
+  .rounded-none {
+    border-radius: 0;
+  }
   .rounded-xl {
     border-radius: var(--radius-xl);
+  }
+  .border-b {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
   }
   .input-ghost {
     background-color: transparent;
@@ -1598,6 +1619,9 @@
       border-color: #0000;
       box-shadow: none;
     }
+  }
+  .border-base-300 {
+    border-color: var(--color-base-300);
   }
   .table-zebra {
     tbody {
@@ -1632,6 +1656,9 @@
   .stroke-current {
     stroke: currentColor;
   }
+  .p-1 {
+    padding: calc(var(--spacing) * 1);
+  }
   .p-2 {
     padding: calc(var(--spacing) * 2);
   }
@@ -1643,6 +1670,9 @@
   }
   .p-6 {
     padding: calc(var(--spacing) * 6);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing) * 3);
   }
   .px-4 {
     padding-inline: calc(var(--spacing) * 4);
@@ -1703,6 +1733,10 @@
   }
   .text-\[4rem\] {
     font-size: 4rem;
+  }
+  .leading-none {
+    --tw-leading: 1;
+    line-height: 1;
   }
   .font-bold {
     --tw-font-weight: var(--font-weight-bold);
@@ -1773,6 +1807,18 @@
     --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 8px 10px -6px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
+  .btn-ghost {
+    &:not(.btn-active, :hover, :active:focus, :focus-visible) {
+      --btn-shadow: "";
+      --btn-bg: #0000;
+      --btn-border: #0000;
+      --btn-noise: none;
+      &:not(:disabled, [disabled], .btn-disabled) {
+        outline-color: currentColor;
+        --btn-fg: currentColor;
+      }
+    }
+  }
   .ease-out {
     --tw-ease: var(--ease-out);
     transition-timing-function: var(--ease-out);
@@ -1805,6 +1851,24 @@
   .btn-warning {
     --btn-color: var(--color-warning);
     --btn-fg: var(--color-warning-content);
+  }
+  .select-none {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .hover\:bg-error {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-error);
+      }
+    }
+  }
+  .hover\:text-base-100 {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-base-100);
+      }
+    }
   }
   .sm\:grid-cols-3 {
     @media (width >= 40rem) {
@@ -3233,6 +3297,15 @@ html, body, main, section, div.overflow-auto, div.overflow-y-auto {
   syntax: "*";
   inherits: false;
   initial-value: 0;
+}
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
 }
 @property --tw-font-weight {
   syntax: "*";

@@ -107,6 +107,9 @@ app.whenReady().then(() => {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    frame: false,
+    titleBarStyle: 'hidden',
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
@@ -131,6 +134,17 @@ app.whenReady().then(() => {
 // Quit when all windows are closed (except macOS)
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+
+// IPC handlers for window controls
+ipcMain.on('win-minimise', () => BrowserWindow.getFocusedWindow()?.minimize());
+ipcMain.on('win-maximise', () => BrowserWindow.getFocusedWindow()?.maximize());
+ipcMain.on('win-close',    () => BrowserWindow.getFocusedWindow()?.close());
+ipcMain.on('win-toggle-max', () => {
+  const win = BrowserWindow.getFocusedWindow();
+  if (!win) return;
+  win.isMaximized() ? win.unmaximize() : win.maximize();
 });
 
 // IPC handlers for global data

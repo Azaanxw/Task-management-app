@@ -17,6 +17,10 @@ contextBridge.exposeInMainWorld('appTracker', {
 });
 
 contextBridge.exposeInMainWorld('globalDataAPI', {
+    minimise : () => ipcRenderer.send('win-minimise'),
+    maximise : () => ipcRenderer.send('win-maximise'),
+    close    : () => ipcRenderer.send('win-close'),
+    toggleMax: () => ipcRenderer.send('win-toggle-max'),
     // Gets the current global data from main process
     getGlobalData: async () => {
       return await ipcRenderer.invoke('get-global-data');

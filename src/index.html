@@ -5,10 +5,44 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="./output.css" rel="stylesheet">
-  <title>Task Management App</title>
 </head>
 
 <body class="bg-base-100">
+  <!--  Custom title bar  -->
+  <header id="titlebar" style="-webkit-app-region: drag;" class="sticky top-0 z-50 w-full h-8 flex items-center justify-between px-3
+         bg-base-200 border-b border-base-300 text-sm leading-none font-medium">
+    <span class="truncate select-none">Task Management App</span>
+
+    <!-- Window controls -->
+    <div class="flex gap-2" style="-webkit-app-region: no-drag;">
+      <!-- Minimize button-->
+      <button id="min-btn" class="btn btn-xs btn-ghost rounded-none p-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24"
+          stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+        </svg>
+      </button>
+
+      <!-- Maximize/Restore button -->
+      <button id="max-btn" class="btn btn-xs btn-ghost rounded-none p-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24"
+          stroke-width="2">
+          <rect x="4" y="4" width="16" height="16" rx="1" ry="1" />
+        </svg>
+      </button>
+
+      <!-- Close button -->
+      <button id="close-btn" class="btn btn-xs btn-ghost rounded-none p-1 
+        hover:bg-error hover:text-base-100" style="-webkit-app-region: no-drag;">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24"
+          stroke-width="2">
+          <line x1="4" y1="4" x2="20" y2="20" stroke-linecap="round" />
+          <line x1="4" y1="20" x2="20" y2="4" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
   <div class="min-h-screen flex flex-col">
     <main class="flex-1 overflow-auto p-4 pb-16">
       <!-- HOME -->

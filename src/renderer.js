@@ -10,7 +10,6 @@ let lastFocusUpdate = 0;
 let focusChart = null;
 let sessionXpAwarded = false;
 let totalTasksCompleted = 0;
-
 // DaisyUI themes + required level to unlock them
 const themes = [
     { name: 'dark', level: 1 },
@@ -29,13 +28,27 @@ const themes = [
     { name: 'wireframe', level: 14 }
 ];
 
+/* CUSTOM TITLE BAR */
+document.addEventListener('DOMContentLoaded', () => {
+    // Custom window controls
+    const { minimise, maximise, close, toggleMax } = window.globalDataAPI;
+  
+    document.getElementById('min-btn') .addEventListener('click', minimise);
+    document.getElementById('max-btn') .addEventListener('click', toggleMax);
+    document.getElementById('close-btn').addEventListener('click', close);
+
+    // Toggles maximization on double-clicking the title bar
+    document.getElementById('titlebar')
+            .addEventListener('dblclick', toggleMax);
+  });
+
 /*
 --------------------------
 NAVIAGATION SECTION 
 --------------------------
 */
 
-// Handles navigation between the different sections & updates the UI accordingly
+// Handles navigation between the different sections & updates folder UI
 document.addEventListener('DOMContentLoaded', () => {
     // Handles the navigation between sections
     const dockButtons = document.querySelectorAll('.dock button');

@@ -62,6 +62,7 @@ require('child_process').exec('npm run build.css', (err, stdout, stderr) => {
 
 // Overlay window and positioning
 let overlayWindow;
+let hideTimer = null;  // debounce handler 
 function createOverlayWindow() {
   overlayWindow = new BrowserWindow({
     width: 300,
@@ -97,12 +98,23 @@ async function updateOverlayBounds(win) {
     const isDistracting = globalData.distractingApps
       .some(app => app.toLowerCase() === activeAppName.toLowerCase());
 
-    if (isDistracting && focusTimerActive) win.show();
-    else win.hide();
-  } catch (err) {
-    console.error('Error updating overlay bounds:', err);
+      const shouldShow = isDistracting && focusTimerActive;
+
+      if (shouldShow) {
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        if (!overlayWindow.isVisible()) overlayWindow.show();
+      } else {
+        if (!hideTimer) {
+          hideTimer = setTimeout(() => {
+            overlayWindow.hide();
+            hideTimer = null;
+          }, 200);
+        }
+      }
+    } catch (err) {
+      console.error('Error updating overlay bounds:', err);
+    }
   }
-}
 
 // Initialize windows after app is ready
 app.whenReady().then(() => {
@@ -122,28 +134,11 @@ app.whenReady().then(() => {
   });
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-  // Overlay setup
   createOverlayWindow();
   updateOverlayBounds(overlayWindow);
+  // Debounced loop for both show & hide
   setInterval(() => updateOverlayBounds(overlayWindow), 100);
-  setInterval(async () => {
-    if (!overlayWindow || overlayWindow.isDestroyed()) return;
-    const info = await activeWin();
-    if (
-      !info || !info.owner || typeof info.owner.name !== 'string' ||
-      !info.owner.name.trim()
-    ) {
-      // Akips overlay if no active window or invalid name
-      return;
-    }
-    const name = info?.owner?.name.replace('.exe', '').trim();
-    const isDistracting = globalData.distractingApps
-      .some(app => app.toLowerCase() === name.toLowerCase());
-
-    if (isDistracting && focusTimerActive) overlayWindow.show();
-    else overlayWindow.hide();
-  }, 1000);
-});
+  });
 
 // Quits when all windows are closed 
 app.on('window-all-closed', () => {
@@ -193,11 +188,23 @@ ipcMain.on('focus-timer-state', (event, isActive) => {
   focusTimerActive = isActive;
 });
 
+// IPC handler to close the distracting app window
 ipcMain.handle('close-active-window', async () => {
   const winInfo = await activeWin();
   if (winInfo?.owner?.processId) {
     try {
+      // Closes the distracting app 
       process.kill(winInfo.owner.processId);
+
+      // Cancels any pending hide timeout and hides overlay window 
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+      if (overlayWindow && overlayWindow.isVisible()) {
+        overlayWindow.hide();
+      }
+
       return true;
     } catch (e) {
       console.error('Failed to close process', e);

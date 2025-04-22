@@ -1235,6 +1235,9 @@
       }
     }
   }
+  .absolute {
+    position: absolute;
+  }
   .fixed {
     position: fixed;
   }
@@ -1243,6 +1246,9 @@
   }
   .sticky {
     position: sticky;
+  }
+  .inset-0 {
+    inset: calc(var(--spacing) * 0);
   }
   .top-0 {
     top: calc(var(--spacing) * 0);
@@ -1352,6 +1358,9 @@
       }
     }
   }
+  .mt-1 {
+    margin-top: calc(var(--spacing) * 1);
+  }
   .mt-2 {
     margin-top: calc(var(--spacing) * 2);
   }
@@ -1381,6 +1390,9 @@
   }
   .mb-8 {
     margin-bottom: calc(var(--spacing) * 8);
+  }
+  .ml-2 {
+    margin-left: calc(var(--spacing) * 2);
   }
   .status {
     display: inline-block;
@@ -1567,6 +1579,12 @@
   .w-screen {
     width: 100vw;
   }
+  .min-w-0 {
+    min-width: calc(var(--spacing) * 0);
+  }
+  .min-w-\[16rem\] {
+    min-width: 16rem;
+  }
   .flex-1 {
     flex: 1;
   }
@@ -1600,11 +1618,17 @@
   .auto-rows-fr {
     grid-auto-rows: minmax(0, 1fr);
   }
+  .grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
   .grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .flex-col {
     flex-direction: column;
+  }
+  .flex-nowrap {
+    flex-wrap: nowrap;
   }
   .flex-wrap {
     flex-wrap: wrap;
@@ -1615,6 +1639,9 @@
   .items-center {
     align-items: center;
   }
+  .items-end {
+    align-items: flex-end;
+  }
   .items-stretch {
     align-items: stretch;
   }
@@ -1623,6 +1650,9 @@
   }
   .justify-center {
     justify-content: center;
+  }
+  .justify-end {
+    justify-content: flex-end;
   }
   .justify-evenly {
     justify-content: space-evenly;
@@ -1675,6 +1705,13 @@
       --tw-space-x-reverse: 0;
       margin-inline-start: calc(calc(var(--spacing) * 2) * var(--tw-space-x-reverse));
       margin-inline-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-x-reverse)));
+    }
+  }
+  .space-x-4 {
+    :where(& > :not(:last-child)) {
+      --tw-space-x-reverse: 0;
+      margin-inline-start: calc(calc(var(--spacing) * 4) * var(--tw-space-x-reverse));
+      margin-inline-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-x-reverse)));
     }
   }
   .gap-y-6 {
@@ -1769,9 +1806,6 @@
   .p-1 {
     padding: calc(var(--spacing) * 1);
   }
-  .p-2 {
-    padding: calc(var(--spacing) * 2);
-  }
   .p-3 {
     padding: calc(var(--spacing) * 3);
   }
@@ -1789,6 +1823,9 @@
   }
   .py-1 {
     padding-block: calc(var(--spacing) * 1);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing) * 2);
   }
   .py-3 {
     padding-block: calc(var(--spacing) * 3);
@@ -1843,6 +1880,10 @@
     font-size: 0.6875rem;
     --btn-p: 0.5rem;
     --size: calc(var(--size-field, 0.25rem) * 6);
+  }
+  .select-sm {
+    --size: calc(var(--size-field, 0.25rem) * 8);
+    font-size: 0.75rem;
   }
   .text-\[4rem\] {
     font-size: 4rem;
@@ -1986,6 +2027,11 @@
       }
     }
   }
+  .sm\:grid-cols-2 {
+    @media (width >= 40rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
   .sm\:grid-cols-3 {
     @media (width >= 40rem) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2005,6 +2051,11 @@
         border-inline-end: var(--border) dashed color-mix(in oklab, currentColor 10%, #0000);
         border-block-end: none;
       }
+    }
+  }
+  .md\:grid-cols-5 {
+    @media (width >= 48rem) {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
     }
   }
   .md\:flex-row {
@@ -2027,6 +2078,12 @@
       flex-direction: row;
     }
   }
+}
+html, body, * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 body {
   font-family: Arial, sans-serif;
@@ -2063,9 +2120,19 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, main::-webkit-scrollbar, secti
   height: 0 !important;
   background: transparent !important;
 }
-html, body, main, section, div.overflow-auto, div.overflow-y-auto {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+#deadlines-list, #folder-wrapper {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--color-base-100) var(--color-base-200) !important;
+}
+#deadlines-list::-webkit-scrollbar, #folder-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.card {
+  background-color: var(--color-base-200);
+  border: 2px solid var(--color-base-300);
+  border-radius: var(--rounded-box);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 @layer base {
   :where(:root),:root:has(input.theme-controller[value=light]:checked),[data-theme=light] {

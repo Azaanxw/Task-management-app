@@ -103,7 +103,61 @@ document.addEventListener('DOMContentLoaded', () => {
   // Reacts when the whole window resizes
   window.addEventListener('resize', scheduleHeightUpdate);
   setFolderHeight();
+  updateFocusChart();
+  updateChart();
 });
+
+// Shows “No data available” when there's nothing to plot
+const noDataPlugin = {
+  id: 'noData',
+  beforeUpdate(chart) {
+    const hasData = chart.data.datasets.some(ds =>
+      Array.isArray(ds.data) && ds.data.some(v => v !== 0)
+    );
+    const opts = chart.options.scales;
+    if (!hasData) {
+      // always hides the Y‑axis
+      if (opts.y) opts.y.display = false;
+
+      // hides the X‑axis on all charts except focusChart
+      if (opts.x) {
+        if (chart.canvas.id === 'focusChart') {
+          // keep days labels on focusChart
+          opts.x.display = true;
+          opts.x.grid   = { display: false };  
+        } else {
+          
+          opts.x.display = false;
+        }
+      }
+    }
+  },
+
+  afterDraw(chart) {
+    const { ctx, data, chartArea: { left, top, width, height } } = chart;
+    // if there's still no data, draw the message
+    const hasData = data.datasets.some(ds =>
+      Array.isArray(ds.data) && ds.data.some(v => v !== 0)
+    );
+    if (!hasData) {
+      //uses DaisyUI's theme color for the message
+      const color = getComputedStyle(document.documentElement)
+        .getPropertyValue('--color-base-content')
+        .trim() || '#000';
+
+      ctx.save();
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle    = color;
+      ctx.font         = '16px sans-serif';
+      ctx.fillText('No data available', left + width/2, top + height/2);
+      ctx.restore();
+    }
+  }
+};
+
+Chart.register(noDataPlugin);
+
 
 
 /*
@@ -783,25 +837,25 @@ function renderDeadlines() {
   Object.entries(folders).forEach(([folder, tasks]) => {
     tasks.forEach(task => {
       if (!task.completed) {
-        const due       = new Date(task.dueDate);
-        const now       = new Date();
-        const rawDiff   = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
-        const diffDays  = Math.abs(rawDiff);
-        const weeks     = Math.floor(diffDays / 7);
-        const days      = diffDays % 7;
+        const due = new Date(task.dueDate);
+        const now = new Date();
+        const rawDiff = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.abs(rawDiff);
+        const weeks = Math.floor(diffDays / 7);
+        const days = diffDays % 7;
         const dueDisplay = due.toLocaleDateString(undefined, {
           weekday: 'short',
-          year:    'numeric',
-          month:   'short',
-          day:     'numeric'
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
         });
 
         allTasks.push({
           folder,
-          title:    task.title,
+          title: task.title,
           dueDisplay,
           priority: task.priority,
-          status:   task.status,
+          status: task.status,
           timeLeft: `${weeks} week${weeks !== 1 ? 's' : ''} & ${days} day${days !== 1 ? 's' : ''}`,
           diffDays: rawDiff
         });
@@ -816,13 +870,13 @@ function renderDeadlines() {
   });
   const ul = document.getElementById('deadlines-list');
   // enforce styling so it never expands the container
-  ul.style.display      = 'flex';
-  ul.style.flexWrap     = 'nowrap';
-  ul.style.overflowX    = 'auto';
-  ul.style.width        = '100%';
-  ul.style.maxWidth     = '100%';
-  ul.style.padding      = '0.5rem 0';   
-  ul.style.gap          = '1rem';       
+  ul.style.display = 'flex';
+  ul.style.flexWrap = 'nowrap';
+  ul.style.overflowX = 'auto';
+  ul.style.width = '100%';
+  ul.style.maxWidth = '100%';
+  ul.style.padding = '0.5rem 0';
+  ul.style.gap = '1rem';
 
   // Fills the list with tasks from soonest to later due date
   ul.innerHTML = allTasks.map(t => `
@@ -844,7 +898,7 @@ function renderDeadlines() {
 
 
 // Drag‑to‑scroll functionality for deadlines
-(function(){
+(function () {
   const slider = document.getElementById('deadlines-list');
   let isDown = false, startX, scrollLeft;
 
@@ -905,11 +959,11 @@ function toggleTaskCompletion(folder, i) {
       const btn = document.querySelector(`.task-btn[data-folder="${folder}"][data-index="${i}"]`);
       if (btn) {
         const li = btn.closest('li');
-        if (li) li.animate([{opacity:1},{opacity:0}],{duration:1000})
-                  .onfinish = () => {
-                    folders[folder].splice(i,1);
-                    renderFolders(); renderDeadlines();
-                  };
+        if (li) li.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1000 })
+          .onfinish = () => {
+            folders[folder].splice(i, 1);
+            renderFolders(); renderDeadlines();
+          };
       }
     }, 3000);
 
@@ -928,10 +982,10 @@ function undoComplete(folder, i) {
 
   // remmoves the exp that was given when task was completed as they pressed undo to prevent exp farming
   if (task.xpAwarded) {
-    removeExp(20);               
-    totalTasksCompleted = Math.max(0, totalTasksCompleted-1);
+    removeExp(20);
+    totalTasksCompleted = Math.max(0, totalTasksCompleted - 1);
     task.xpAwarded = false;
-    showRemoveExpAnimation(20); 
+    showRemoveExpAnimation(20);
   }
 
   task.completed = false;
@@ -1067,7 +1121,7 @@ function showRemoveExpAnimation(amount) {
     transform: 'translate(-50%, -50%)',
     fontSize: '2rem',
     fontWeight: 'bold',
-    color: '#f87171',       
+    color: '#f87171',
     textShadow: '0 0 10px rgba(248, 113, 113, 0.7)',
     opacity: '1',
     pointerEvents: 'none',

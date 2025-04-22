@@ -15,6 +15,25 @@
     <button id="closeButton" class="btn btn-error">Close Window</button>
     <button id="endBreakButton" class="btn btn-primary">End Focus Session</button>
   </div>
+
+  <script>
+    // Closes the active app
+    document.getElementById('closeButton')
+      .addEventListener('click', () => window.overlayAPI.closeActiveWindow());
+
+    // Pauses the focus timer
+    document.getElementById('endBreakButton')
+      .addEventListener('click', () => window.overlayAPI.pauseTimer());
+
+    // Updates display on each timer tick
+    window.overlayAPI.onTimerUpdate((time, isBreak) => {
+      const m = Math.floor(time / 60).toString().padStart(2, '0');
+      const s = (time % 60).toString().padStart(2, '0');
+      document.getElementById('timerText').innerText = `${m}:${s}`;
+      document.getElementById('statusText').innerText =
+        isBreak ? 'On Break' : 'Focus time remaining';
+    });
+  </script>
 </body>
 
 </html>

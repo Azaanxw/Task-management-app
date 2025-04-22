@@ -120,6 +120,7 @@ function updateTimerDisplay() {
   timerDisplay.innerText = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   updateCircleProgress();
   updateFocusTimeDisplay(); // Update focus time continuously
+  window.rendererAPI.sendTimerUpdate(timeRemaining, isBreak);
 }
 
 // Function to start the timer
@@ -128,6 +129,7 @@ function startTimer() {
   isPaused = false;
   sessionXpAwarded = false;
   lastFocusUpdate = Date.now();
+  window.rendererAPI.setFocusState(true); // Sets focus state to true when timer starts
   timer = setInterval(() => {
     if (timeRemaining > 0) {
       timeRemaining--;
@@ -166,6 +168,7 @@ function pauseTimer() {
   if (timer && !isPaused) {
     clearInterval(timer);
     timer = null;
+    window.rendererAPI.setFocusState(false);
     isPaused = true;
 
     if (!isBreak && !sessionXpAwarded) {
@@ -193,6 +196,7 @@ function pauseTimer() {
 
 // Function to reset the timer
 function resetTimer() {
+  window.rendererAPI.setFocusState(false);
   // Only awards if not yet awarded in this session slice
   if (!isBreak && !sessionXpAwarded) {
     const sessionSeconds = focusTime - timeRemaining;
@@ -258,6 +262,11 @@ document.getElementById("break-input").addEventListener("change", () => {
   breakTime = parseInt(document.getElementById("break-input").value) * 60;
 });
 
+// Listens for the pause command coming from the overlay window
+window.rendererAPI.onPauseCommand(() => {
+  pauseTimer();
+});
+
 // Initializes the timer display
 updateTimerDisplay();
 updateFocusTimeDisplay();
@@ -281,7 +290,7 @@ function updateFocusChart() {
   const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   // Raw seconds per day
-  const secs = labels.map((_, i) => weeklyFocusData[i] || 0);
+  const secs = labels.map((_, i) => weeklyFocusData[(i + 1) % 7] || 0);
   const maxSec = Math.max(...secs, 10);
 
   // Decides the tick step to use depending on the max value

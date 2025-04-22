@@ -5,6 +5,7 @@ const mysql = require('mysql2');
 require('dotenv').config();
 const globalData = require('./globalData');
 const activeWin = require('active-win');
+let focusTimerActive = false;
 
 // Disable GPU cache and shader disk cache
 app.commandLine.appendSwitch('disable-gpu-cache');
@@ -96,7 +97,7 @@ async function updateOverlayBounds(win) {
     const isDistracting = globalData.distractingApps
       .some(app => app.toLowerCase() === activeAppName.toLowerCase());
 
-    if (isDistracting) win.show();
+    if (isDistracting && focusTimerActive) win.show();
     else win.hide();
   } catch (err) {
     console.error('Error updating overlay bounds:', err);
@@ -128,18 +129,25 @@ app.whenReady().then(() => {
   setInterval(async () => {
     if (!overlayWindow || overlayWindow.isDestroyed()) return;
     const info = await activeWin();
+    if (
+      !info || !info.owner || typeof info.owner.name !== 'string' ||
+      !info.owner.name.trim()
+    ) {
+      // Akips overlay if no active window or invalid name
+      return;
+    }
     const name = info?.owner?.name.replace('.exe', '').trim();
     const isDistracting = globalData.distractingApps
       .some(app => app.toLowerCase() === name.toLowerCase());
 
-    if (isDistracting) overlayWindow.show();
+    if (isDistracting && focusTimerActive) overlayWindow.show();
     else overlayWindow.hide();
   }, 1000);
 });
 
-// Quit when all windows are closed (except macOS)
+// Quits when all windows are closed 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  app.quit();
 });
 
 
@@ -179,4 +187,31 @@ ipcMain.handle('remove-distracting-app', (event, appName) => {
     );
   }
   return globalData;
+});
+// IPC handler to set focus timer state
+ipcMain.on('focus-timer-state', (event, isActive) => {
+  focusTimerActive = isActive;
+});
+
+ipcMain.handle('close-active-window', async () => {
+  const winInfo = await activeWin();
+  if (winInfo?.owner?.processId) {
+    try {
+      process.kill(winInfo.owner.processId);
+      return true;
+    } catch (e) {
+      console.error('Failed to close process', e);
+    }
+  }
+  return false;
+});
+
+ipcMain.on('overlay-pause', () => {
+  if (mainWindow && !mainWindow.isDestroyed())
+    mainWindow.webContents.send('pause-timer');
+});
+
+ipcMain.on('timer-update', (event, time, isBreak) => {
+  if (overlayWindow && !overlayWindow.isDestroyed())
+    overlayWindow.webContents.send('timer-update', time, isBreak);
 });

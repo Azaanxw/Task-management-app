@@ -1,54 +1,83 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-    themes: all;
-  }
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-}
-.container {
-    margin: 20px auto;
-    max-width: 600px;
-}
-.timer-widget {
-    margin: 20px 0;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-#timer-display {
-    font-size: 2em;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  themes: all;
 }
 
-/* Hides scrollbar across all sections but still allows scrolling */
+/* Disables selection on every element to prevent blue highlighting */
+html, body, * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.container {
+  margin: 20px auto;
+  max-width: 600px;
+}
+
+.timer-widget {
+  margin: 20px 0;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#timer-display {
+  font-size: 2em;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
 
 /* Prevents button from moving positions */
-html { scrollbar-gutter: stable; }
+html {
+  scrollbar-gutter: stable;
+}
 
-/* Hides scrollbar */
+/* Hides all scrollbars globally */
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
 main::-webkit-scrollbar,
 section::-webkit-scrollbar,
 div.overflow-auto::-webkit-scrollbar,
 div.overflow-y-auto::-webkit-scrollbar {
-  width: 0 !important;          
+  width: 0 !important;
   height: 0 !important;
   background: transparent !important;
 }
 
-html, body, main, section,
-div.overflow-auto, div.overflow-y-auto {
-  scrollbar-width: none !important;    
-  -ms-overflow-style: none !important; 
+
+/* Scrollbar for deadlines & folders */
+#deadlines-list,
+#folder-wrapper {
+  scrollbar-width: thin !important;
+  scrollbar-color: var(--color-base-100) var(--color-base-200) !important;
+}
+
+#deadlines-list::-webkit-scrollbar,
+#folder-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Makes card stand out more */
+.card {
+  background-color: var(--color-base-200);
+  border: 2px solid var(--color-base-300);
+  border-radius: var(--rounded-box);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }

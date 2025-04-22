@@ -60,7 +60,7 @@
         <!-- Timer Widget, Weekly chart and Folder container-->
         <main class="flex flex-col md:flex-row gap-6 items-stretch">
           <!-- Left Column: Timer and Weekly Chart -->
-          <div class="flex flex-col gap-6 flex-1" id="left-column">
+          <div class="flex flex-col gap-6 flex-1 min-w-0" id="left-column">
             <!-- Focus Timer -->
             <div class="bg-base-200 p-6 rounded-lg shadow-xl">
               <h2 class="text-3xl font-bold mb-4">Focus Timer</h2>
@@ -92,6 +92,16 @@
               </div>
               <p id="total-focus-time" class="text-lg mt-4 text-center">Total Focus Time: 0h 0m</p>
             </div>
+            <!-- Deadlines section -->
+            <section id="deadlines" class="mt-8 bg-base-200 p-6 rounded-lg shadow-xl">
+              <h2 class="text-xl font-bold mb-4">Deadlines</h2>
+              <ul
+              id="deadlines-list"
+              class="flex flex-nowrap overflow-x-auto py-2 space-x-4 w-full"
+            >
+                <!-- Dynamically added deadlines will appear here -->
+              </ul>
+            </section>
             <!-- Weekly Focus Chart -->
             <div id="focus-chart-container" class="bg-base-200 p-6 rounded-xl shadow-lg">
               <h2 class="text-lg font-bold text-center mb-2">Weekly focused time</h2>

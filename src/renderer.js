@@ -598,22 +598,91 @@ function renderFolders() {
                 <div class="collapse-content mt-2">
                     <ul class="space-y-2">
                         ${folders[folder].map((task, index) => `
-                            <li class="flex justify-between items-center bg-base-300 p-2 rounded-lg shadow-sm">
-                                <span class="${task.completed ? 'line-through text-gray-400' : ''}">
-                                    ${task.title}
-                                </span>
-                                <button class="btn btn-xs ${task.completed ? 'btn-warning' : 'btn-success'} task-btn" 
-                                    data-folder="${folder}" data-index="${index}">
-                                    ${task.completed ? "Undo" : "Complete"}
-                                </button>
-                            </li>
+                           <li class="bg-base-300 p-3 rounded-lg shadow-sm">
+                            <div class="flex justify-between items-center">
+                              <span class="${task.completed ? 'line-through text-gray-400' : 'font-semibold'}">
+                                ${task.title}
+                              </span>
+                              <button class="btn btn-xs ${task.completed ? 'btn-warning' : 'btn-success'} task-btn"
+                                      data-folder="${folder}" data-index="${index}">
+                                ${task.completed ? "Undo" : "Complete"}
+                              </button>
+                            </div>
+                            <div class="mt-1 text-xs text-gray-400 flex flex-wrap gap-2">
+                              <span>Due: ${task.dueDate}</span>
+                              <span>Priority: ${task.priority}</span>
+                              <span>Status: ${task.status.replace('-', ' ')}</span>
+                            </div>
+                          </li>
+
                         `).join("")}
                     </ul>
-                    <div class="mt-2">
-                        <input type="text" class="input input-sm input-bordered w-full" id="task-input-${folder}" placeholder="New Task">
-                        <button class="btn btn-sm btn-neutral mt-2 w-full" onclick="addTask('${folder}')">Add Task</button>
-                    </div>
-                </div>
+<div class="mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+  <!-- Task Title -->
+  <div class="flex flex-col">
+    <label class="label mb-1"><span class="label-text">Task</span></label>
+    <input
+      type="text"
+      id="task-input-${folder}"
+      placeholder="New Task"
+      class="input input-sm input-bordered w-full"
+    />
+  </div>
+
+  <!-- Due Date -->
+  <div class="flex flex-col">
+    <label class="label mb-1"><span class="label-text">Date</span></label>
+    <div class="relative h-8">
+      <input
+        type="date"
+        id="due-input-${folder}"
+        min="2025-01-01"
+        max="2025-12-31"
+        title="Must be 2025"
+        required
+        class="absolute inset-0 input input-sm input-bordered w-full"
+      />
+    </div>
+  </div>
+
+  <!-- Priority -->
+  <div class="flex flex-col">
+    <label class="label mb-1"><span class="label-text">Priority</span></label>
+    <select
+      id="priority-input-${folder}"
+      class="select select-sm select-bordered w-full"
+    >
+      <option value="low">Low</option>
+      <option value="medium" selected>Medium</option>
+      <option value="high">High</option>
+    </select>
+  </div>
+
+  <!-- Status -->
+  <div class="flex flex-col">
+    <label class="label mb-1"><span class="label-text">Status</span></label>
+    <select
+      id="status-input-${folder}"
+      class="select select-sm select-bordered w-full"
+    >
+      <option value="next">Next To Do</option>
+      <option value="in-progress">In Progress</option>
+      <option value="later">Later</option>
+    </select>
+  </div>
+
+  <!-- Add Button -->
+  <div class="flex flex-col justify-end">
+    <button
+      onclick="addTask('${folder}')"
+      class="btn btn-sm btn-neutral w-full"
+    >
+      Add
+    </button>
+  </div>
+</div>
+
+
             </details>
             `;
     })
@@ -676,32 +745,200 @@ function addFolder() {
 // Function to add a task to the current folder
 function addTask(folder) {
   const taskInput = document.getElementById(`task-input-${folder}`);
-  const taskTitle = taskInput.value.trim();
-  if (!taskTitle) {
+  const title = taskInput.value.trim();
+  const dueDate = document.getElementById(`due-input-${folder}`).value;
+  const priority = document.getElementById(`priority-input-${folder}`).value;
+  const status = document.getElementById(`status-input-${folder}`).value;
+
+  if (!title) {
     showAlert("Task cannot be empty", "error");
     return;
   }
-  folders[folder].push({ title: taskTitle, completed: false });
+
+  if (!dueDate) {
+    showAlert("Please pick a due date", "error");
+    return;
+  }
+
+  // Pushes new task with title,completed, dueDate, priority, and status
+  folders[folder].push({
+    title,
+    completed: false,
+    dueDate,
+    priority,
+    status
+  });
+
   taskInput.value = "";
   renderFolders();
+  renderDeadlines();
 }
 
-// Function to toggle task completion
-function toggleTaskCompletion(folder, taskIndex) {
-  const task = folders[folder][taskIndex];
-  // Checks if the task is being marked complete (as opposed to being undone)
-  const wasIncomplete = !task.completed;
-  task.completed = !task.completed;
-  renderFolders();
+// Function to show deadlines
+function renderDeadlines() {
+  const allTasks = [];
+  const priorityWeight = { high: 0, medium: 1, low: 2 };
 
-  // Awards EXP only if the task was completed
-  if (wasIncomplete && task.completed) {
-    awardExp(20);
-    totalTasksCompleted++;
+  // Gathers all tasks from all folders and gets their data
+  Object.entries(folders).forEach(([folder, tasks]) => {
+    tasks.forEach(task => {
+      if (!task.completed) {
+        const due       = new Date(task.dueDate);
+        const now       = new Date();
+        const rawDiff   = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+        const diffDays  = Math.abs(rawDiff);
+        const weeks     = Math.floor(diffDays / 7);
+        const days      = diffDays % 7;
+        const dueDisplay = due.toLocaleDateString(undefined, {
+          weekday: 'short',
+          year:    'numeric',
+          month:   'short',
+          day:     'numeric'
+        });
+
+        allTasks.push({
+          folder,
+          title:    task.title,
+          dueDisplay,
+          priority: task.priority,
+          status:   task.status,
+          timeLeft: `${weeks} week${weeks !== 1 ? 's' : ''} & ${days} day${days !== 1 ? 's' : ''}`,
+          diffDays: rawDiff
+        });
+      }
+    });
+  });
+
+  // Sorts tasks by due date and and then priority
+  allTasks.sort((a, b) => {
+    if (a.diffDays !== b.diffDays) return a.diffDays - b.diffDays;
+    return priorityWeight[a.priority] - priorityWeight[b.priority];
+  });
+  const ul = document.getElementById('deadlines-list');
+  // enforce styling so it never expands the container
+  ul.style.display      = 'flex';
+  ul.style.flexWrap     = 'nowrap';
+  ul.style.overflowX    = 'auto';
+  ul.style.width        = '100%';
+  ul.style.maxWidth     = '100%';
+  ul.style.padding      = '0.5rem 0';   
+  ul.style.gap          = '1rem';       
+
+  // Fills the list with tasks from soonest to later due date
+  ul.innerHTML = allTasks.map(t => `
+    <li class="min-w-[16rem] card card-compact bg-base-200 shadow-md">
+      <div class="card-body p-4">
+        <h3 class="card-title">${t.title}</h3>
+        <p class="text-xs"><strong>Folder:</strong> ${t.folder}</p>
+        <p class="text-xs"><strong>Due:</strong> ${t.dueDisplay}</p>
+        <p class="text-xs"><strong>Time left:</strong> ${t.timeLeft}</p>
+        <p class="text-xs">
+          <strong>Priority:</strong> <span class="badge badge-outline">${t.priority}</span>
+        </p>
+        <p class="text-xs"><strong>Status:</strong> ${t.status.replace('-', ' ')}</p>
+      </div>
+    </li>
+  `).join('');
+}
+
+
+
+// Drag‑to‑scroll functionality for deadlines
+(function(){
+  const slider = document.getElementById('deadlines-list');
+  let isDown = false, startX, scrollLeft;
+
+  slider.addEventListener('mousedown', e => {
+    isDown = true;
+    startX = e.pageX - slider.getBoundingClientRect().left;
+    scrollLeft = slider.scrollLeft;
+    slider.style.cursor = 'grabbing';
+  });
+  slider.addEventListener('mouseleave', () => {
+    isDown = false;
+    slider.style.cursor = 'default';
+  });
+  slider.addEventListener('mouseup', () => {
+    isDown = false;
+    slider.style.cursor = 'default';
+  });
+  slider.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - slider.getBoundingClientRect().left;
+    const walk = (x - startX) * 1.5; // controls the scroll speed
+    slider.scrollLeft = scrollLeft - walk;
+  });
+})();
+
+const removalTimers = {};
+// Function to toggle task completion
+function toggleTaskCompletion(folder, i) {
+  const task = folders[folder][i];
+  const id = `${folder}::${i}`;
+
+  if (!task.completed) {
+    task.completed = true;
+
+    // Award exp once a task is completed
+    if (!task.xpAwarded) {
+      awardExp(20);
+      totalTasksCompleted++;
+      task.xpAwarded = true;
+    }
+
     updateProfileUI();
+    renderFolders();
+
+    // Shows alert with undo option for task 
+    showAlert(
+      `Completed "${task.title}"! <button class="btn btn-xs btn-ghost ml-2" id="undo-${id}">Undo</button>`,
+      'info', 3000
+    );
+    setTimeout(() => {
+      const btn = document.getElementById(`undo-${id}`);
+      if (btn) btn.onclick = () => undoComplete(folder, i);
+    }, 0);
+
+    // Schedules fade and delete after 3 seconds
+    removalTimers[id] = setTimeout(() => {
+      const btn = document.querySelector(`.task-btn[data-folder="${folder}"][data-index="${i}"]`);
+      if (btn) {
+        const li = btn.closest('li');
+        if (li) li.animate([{opacity:1},{opacity:0}],{duration:1000})
+                  .onfinish = () => {
+                    folders[folder].splice(i,1);
+                    renderFolders(); renderDeadlines();
+                  };
+      }
+    }, 3000);
+
+  } else {
+    undoComplete(folder, i);
   }
 }
 
+// Function to undo task completion
+function undoComplete(folder, i) {
+  const task = folders[folder][i];
+  const id = `${folder}::${i}`;
+
+  // Cancels the removal if user presses undo under 3 seconds
+  if (removalTimers[id]) clearTimeout(removalTimers[id]);
+
+  // remmoves the exp that was given when task was completed as they pressed undo to prevent exp farming
+  if (task.xpAwarded) {
+    removeExp(20);               
+    totalTasksCompleted = Math.max(0, totalTasksCompleted-1);
+    task.xpAwarded = false;
+    showRemoveExpAnimation(20); 
+  }
+
+  task.completed = false;
+  renderFolders();
+  renderDeadlines();
+  updateProfileUI();
+}
 // Function to select a folder
 function selectFolder(folder) {
   currentFolder = folder;
@@ -720,7 +957,7 @@ EXP SECTION
 */
 
 let userExp = 0;
-let userLevel = 1;
+let userLevel = 100;
 const expThreshold = 100; // EXP needed to level up
 
 // Awards EXP and Handles level Up 
@@ -735,6 +972,22 @@ function awardExp(points) {
   updateRewardsUI();
   updateProfileUI();
   showExpAnimation(points);
+}
+
+// Removes EXP and handles level down
+function removeExp(points) {
+  userExp -= points;
+
+  // Handles level‑down (if XP goes below 0, drop a level) 
+  while (userExp < 0 && userLevel > 1) {
+    userLevel--;
+    userExp += expThreshold;
+  }
+
+  // Never goes below zero exp
+  userExp = Math.max(0, userExp);
+  updateProfileUI();
+  updateLevelUI();
 }
 
 // UI update for circular progress bar
@@ -799,6 +1052,32 @@ function showLevelUpAnimation() {
     duration: 4000,
     easing: 'cubic-bezier(0.22,1,0.36,1)'
   }).onfinish = () => el.remove();
+}
+
+function showRemoveExpAnimation(amount) {
+  const el = document.createElement('div');
+  el.innerText = `-${amount} XP`;
+  // Animation for removing XP
+  const randomOffsetX = (Math.random() - 0.5) * 200;
+  const randomOffsetY = (Math.random() - 0.5) * 100;
+  Object.assign(el.style, {
+    position: 'fixed',
+    top: `calc(50% + ${randomOffsetY}px)`,
+    left: `calc(50% + ${randomOffsetX}px)`,
+    transform: 'translate(-50%, -50%)',
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    color: '#f87171',       
+    textShadow: '0 0 10px rgba(248, 113, 113, 0.7)',
+    opacity: '1',
+    pointerEvents: 'none',
+    zIndex: 998,
+  });
+  document.body.appendChild(el);
+  el.animate([
+    { transform: `translate(-50%, -50%)`, opacity: 1 },
+    { transform: `translate(-50%, -150%)`, opacity: 0 }
+  ], { duration: 1000, easing: 'ease-out' }).onfinish = () => el.remove();
 }
 
 // Creates exp animation

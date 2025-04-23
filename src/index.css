@@ -45,6 +45,10 @@ button {
 
 /* Prevents button from moving positions */
 html {
+  scrollbar-gutter: none !important;
+}
+
+.main-scrollable {
   scrollbar-gutter: stable;
 }
 

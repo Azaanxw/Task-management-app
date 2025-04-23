@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="en" class="bg-base-200">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link href="./output.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Custom Title Bar -->
+  <header id="titlebar" style="-webkit-app-region: drag;" class="sticky top-0 z-50 w-full h-8 flex items-center justify-between
+                 px-3 bg-base-200 border-b border-base-300 text-sm font-medium leading-none">
+    <span class="truncate select-none">Task Manager</span>
+    <div class="flex gap-2" style="-webkit-app-region: no-drag;">
+      <button id="min-btn" class="btn btn-xs btn-ghost rounded-none p-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24"
+          stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+        </svg>
+      </button>
+      <button id="max-btn" class="btn btn-xs btn-ghost rounded-none p-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24"
+          stroke-width="2">
+          <rect x="4" y="4" width="16" height="16" rx="1" ry="1" />
+        </svg>
+      </button>
+      <button id="close-btn" class="btn btn-xs btn-ghost rounded-none p-1 hover:bg-error hover:text-base-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24"
+          stroke-width="2">
+          <line x1="4" y1="4" x2="20" y2="20" stroke-linecap="round" />
+          <line x1="4" y1="20" x2="20" y2="4" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Authentication Container -->
+  <div class="fixed inset-0 bg-base-200 overflow-auto">
+    <div class="flex flex-col justify-center items-center h-full p-8 md:p-16">
+
+      <!-- Login Section -->
+      <section id="login-section" class="w-full max-w-md">
+        <h2 class="text-4xl font-bold mb-8">Log In</h2>
+        <form id="login-form" class="flex flex-col w-full">
+          <label class="mb-1">Username</label>
+          <input type="text" id="login-username" class="input input-bordered w-full mb-4" required>
+          <label class="mb-1">Password</label>
+          <input type="password" id="login-password" class="input input-bordered w-full mb-6" required>
+          <button type="submit" class="btn btn-primary w-full mb-4">Log In</button>
+          <p class="text-center text-sm">
+            Don't have an account?
+            <a href="#" id="show-register" class="text-primary underline">Register</a>
+          </p>
+        </form>
+      </section>
+
+      <!-- Register Section -->
+      <section id="register-section" class="w-full max-w-md" style="display: none;">
+        <h2 class="text-4xl font-bold mb-8">Register</h2>
+        <form id="register-form" class="flex flex-col w-full">
+          <label class="mb-1">Username</label>
+          <input type="text" id="reg-username" class="input input-bordered w-full mb-4" required>
+          <label class="mb-1">Password</label>
+          <input type="password" id="reg-password" class="input input-bordered w-full mb-4" required>
+          <label class="mb-1">Confirm Password</label>
+          <input type="password" id="reg-password-confirm" class="input input-bordered w-full mb-6" required>
+          <button type="submit" class="btn btn-neutral w-full mb-4">Register</button>
+          <p class="text-center text-sm">
+            Already have an account?
+            <a href="#" id="show-login" class="text-primary underline">Log In</a>
+          </p>
+        </form>
+      </section>
+
+    </div>
+  </div>
+  <div
+  id="alert-container"
+  class="fixed bottom-4 left-1/2 transform -translate-x-1/2
+         flex flex-col items-center space-y-2
+         z-[1000] pointer-events-none">
+</div>
+</body>
+<script src="./authentication.js"></script>
+</html>

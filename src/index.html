@@ -5,7 +5,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="./output.css" rel="stylesheet">
+  <style>
+    /* Hide scrollbar but keep scroll functionality for main window */
+    html::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      background: transparent;
+    }
+    main {
+      overflow-y: auto;          
+      -ms-overflow-style: none;  
+      scrollbar-width: none;   
+    }
+    main::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      background: transparent;
+    }
+  </style>
+
 </head>
+
 
 <body class="bg-base-100">
   <!--  Custom title bar  -->

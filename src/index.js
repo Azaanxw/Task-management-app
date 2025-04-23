@@ -5,6 +5,11 @@ const mysql = require('mysql2');
 require('dotenv').config();
 const globalData = require('./globalData');
 const activeWin = require('active-win');
+
+// IPC handler for active win info 
+ipcMain.handle('get-active-win-info', async () => {
+  return activeWin();
+});
 let focusTimerActive = false;
 
 // Disable GPU cache and shader disk cache
@@ -33,6 +38,24 @@ ipcMain.handle('db-query', (event, queryString) => {
       resolve(results);
     });
   });
+});
+
+// IPC handlers for authentication
+ipcMain.handle('auth-register', async (event, { username, password }) => {
+  return { success: true };
+});
+ipcMain.handle('auth-login', async (event, { username, password }) => {
+  const ok = Boolean(username && password);
+  return { success: ok };
+});
+
+// Login success handler
+ipcMain.on('auth-login-success', () => {
+  if (loginWindow) {
+    loginWindow.close();
+    loginWindow = null;
+  }
+  createMainWindow();
 });
 
 // Extract and save application icon
@@ -116,29 +139,49 @@ async function updateOverlayBounds(win) {
     }
   }
 
-// Initialize windows after app is ready
-app.whenReady().then(() => {
-  // Menu.setApplicationMenu(null); // Hides menu bar 
-  // Main window
-  mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    frame: false,
-    titleBarStyle: 'hidden',
-    autoHideMenuBar: true,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      contextIsolation: true,
-    },
-  });
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  // Creates the login window
+  function createLoginWindow() {
+    loginWindow = new BrowserWindow({
+      width: 400,
+      height: 500,
+      frame: false,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false
+      }
+    });
+    loginWindow.loadFile(path.join(__dirname, 'authentication.html'));
+  }
+  
+  // Creates the main application window
+  function createMainWindow() {
+    mainWindow = new BrowserWindow({
+      width: 800,
+      height: 600,
+      frame: false,
+      titleBarStyle: 'hidden',
+      autoHideMenuBar: true,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        contextIsolation: true,
+        nodeIntegration: false
+      }
+    });
+    mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-  createOverlayWindow();
-  updateOverlayBounds(overlayWindow);
-  // Debounced loop for both show & hide
-  setInterval(() => updateOverlayBounds(overlayWindow), 100);
+    createOverlayWindow();
+    updateOverlayBounds(overlayWindow);
+    setInterval(() => updateOverlayBounds(overlayWindow), 100);
+  }
+  
+// Loads the login window first 
+app.whenReady().then(() => {
+  createLoginWindow();
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createLoginWindow();
   });
+});
 
 // Quits when all windows are closed 
 app.on('window-all-closed', () => {

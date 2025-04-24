@@ -1,75 +1,63 @@
-CREATE DATABASE TaskManagement;
+CREATE DATABASE IF NOT EXISTS TaskManagement;
 USE TaskManagement;
 
--- User Table
-CREATE TABLE user (
-    user_ID INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    points INT DEFAULT 0,
-    level INT DEFAULT 1
+-- Users 
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  level INT NOT NULL DEFAULT 1,
+  xp INT NOT NULL DEFAULT 0,
+  total_focus_mins INT NOT NULL DEFAULT 0,
+  tasks_completed INT NOT NULL DEFAULT 0,
+  streak_days INT NOT NULL DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Folder Table
-CREATE TABLE folder (
-    folder_ID INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    user_ID INT,
-    FOREIGN KEY (user_ID) REFERENCES user(user_ID) ON DELETE CASCADE
+-- Folders
+CREATE TABLE folders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Task Table
-CREATE TABLE task (
-    task_ID INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    dueDate DATETIME,
-    status VARCHAR(50) NOT NULL DEFAULT 'Pending',
-    priority VARCHAR(50) NOT NULL DEFAULT 'Medium',
-    folder_ID INT,
-    FOREIGN KEY (folder_ID) REFERENCES folder(folder_ID) ON DELETE CASCADE
+-- Tasks 
+CREATE TABLE tasks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  folder_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  completed BOOLEAN NOT NULL DEFAULT FALSE,
+  due_date DATE,
+  priority ENUM('low','medium','high') NOT NULL DEFAULT 'medium',
+  status ENUM('next','in-progress','later') NOT NULL DEFAULT 'next',
+  xp_awarded BOOLEAN NOT NULL DEFAULT FALSE,
+  FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE CASCADE
 );
 
--- Leaderboard Table
+-- Distracting applications
+CREATE TABLE distracting_apps (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  app_name VARCHAR(255) NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Application usage 
+CREATE TABLE app_usage_totals (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  app_name VARCHAR(255) NOT NULL,
+  total_minutes INT NOT NULL DEFAULT 0,
+  last_updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY (user_id, app_name)
+);
+
+-- Leaderboard 
 CREATE TABLE leaderboard (
-    leaderboard_ID INT AUTO_INCREMENT PRIMARY KEY,
-    user_ID INT,
-    level INT DEFAULT 1,
-    points INT DEFAULT 0,
-    FOREIGN KEY (user_ID) REFERENCES user(user_ID) ON DELETE CASCADE
-);
-
--- Analytics Table
-CREATE TABLE analytics (
-    analytics_ID INT AUTO_INCREMENT PRIMARY KEY,
-    user_ID INT,
-    timeSpent INT DEFAULT 0,
-    productivityScore DOUBLE DEFAULT 0.0,
-    FOREIGN KEY (user_ID) REFERENCES user(user_ID) ON DELETE CASCADE
-);
-
--- Reward Table
-CREATE TABLE reward (
-    reward_ID INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    levelRequired INT NOT NULL
-);
-
--- Announcement Table
-CREATE TABLE announcement (
-    announcement_ID INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    createdBy VARCHAR(255) NOT NULL
-);
-
--- Admin Table
-CREATE TABLE admin (
-    admin_ID INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL
+  user_id INT PRIMARY KEY,
+  username VARCHAR(255) NOT NULL,
+  level INT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

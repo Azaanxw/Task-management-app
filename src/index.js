@@ -5,6 +5,7 @@ const mysql = require('mysql2');
 require('dotenv').config();
 const globalData = require('./globalData');
 const activeWin = require('active-win');
+const bcrypt = require('bcrypt');
 
 // IPC handler for active win info 
 ipcMain.handle('get-active-win-info', async () => {
@@ -41,12 +42,68 @@ ipcMain.handle('db-query', (event, queryString) => {
 });
 
 // IPC handlers for authentication
+// Registration handler
 ipcMain.handle('auth-register', async (event, { username, password }) => {
-  return { success: true };
+  if (!username || !password) {
+    return { success: false, message: 'Username and password are required' };
+  }
+  try {
+    // Checks if username is already taken
+    const existingUsers = await new Promise((resolve, reject) => {
+      db.query(
+        'SELECT id FROM users WHERE username = ?',
+        [username],
+        (err, rows) => err ? reject(err) : resolve(rows)
+      );
+    });
+    if (existingUsers.length > 0) {
+      return { success: false, message: 'Username already taken' };
+    }
+
+    // Hashes password and inserts new user
+    const passwordHash = await bcrypt.hash(password, 10);
+    await new Promise((resolve, reject) => {
+      db.query(
+        'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+        [username, passwordHash],
+        err => err ? reject(err) : resolve()
+      );
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Registration error:', error);
+    return { success: false, message: 'Registration failed' };
+  }
 });
+
+// Login handler
 ipcMain.handle('auth-login', async (event, { username, password }) => {
-  const ok = Boolean(username && password);
-  return { success: ok };
+  if (!username || !password) {
+    return { success: false, message: 'Username and password are required' };
+  }
+  try {
+    // Fetches stored password hash
+    const users = await new Promise((resolve, reject) => {
+      db.query(
+        'SELECT password_hash FROM users WHERE username = ?',
+        [username],
+        (err, rows) => err ? reject(err) : resolve(rows)
+      );
+    });
+    if (users.length === 0) {
+      return { success: false, message: 'Invalid credentials' };
+    }
+
+    const match = await bcrypt.compare(password, users[0].password_hash);
+    if (!match) {
+      return { success: false, message: 'Invalid credentials' };
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('Login error:', error);
+    return { success: false, message: 'Login failed' };
+  }
 });
 
 // Login success handler

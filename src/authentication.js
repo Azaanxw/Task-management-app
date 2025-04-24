@@ -24,8 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // Login form logic 
   document.getElementById('login-form').addEventListener('submit', async e => {
     e.preventDefault();
-    window.authAPI.forceLogin();
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const result = await window.authAPI.login(username, password);
+    if (result.success) {
+      window.authAPI.forceLogin();
+    } else {
+      showAlert(result.message || 'Login failed', 'error');
+    }
   });
+
 
   // Register form logic
   document.getElementById('register-form').addEventListener('submit', async e => {

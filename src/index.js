@@ -1,118 +1,27 @@
-const { app, BrowserWindow, ipcMain, screen, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, screen} = require('electron');
 const path = require('path');
 const fs = require('fs');
 const mysql = require('mysql2');
-require('dotenv').config();
-const globalData = require('./globalData');
 const activeWin = require('active-win');
 const bcrypt = require('bcrypt');
+require('dotenv').config();
 
-// IPC handler for active win info 
-ipcMain.handle('get-active-win-info', async () => {
-  return activeWin();
-});
+let currentUserId = null;
 let focusTimerActive = false;
 
-// Disable GPU cache and shader disk cache
-app.commandLine.appendSwitch('disable-gpu-cache');
-app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
-
 // MySQL database connection
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: 3306,
-});
+}).promise();
 
-db.connect(err => {
-  if (err) console.error('Database connection failed:', err.message);
-  else console.log('Connected to MySQL database.');
-});
-
-// IPC handler for database queries
-ipcMain.handle('db-query', (event, queryString) => {
-  return new Promise((resolve, reject) => {
-    db.query(queryString, (err, results) => {
-      if (err) return reject(err);
-      resolve(results);
-    });
-  });
-});
-
-// IPC handlers for authentication
-// Registration handler
-ipcMain.handle('auth-register', async (event, { username, password }) => {
-  if (!username || !password) {
-    return { success: false, message: 'Username and password are required' };
-  }
-  try {
-    // Checks if username is already taken
-    const existingUsers = await new Promise((resolve, reject) => {
-      db.query(
-        'SELECT id FROM users WHERE username = ?',
-        [username],
-        (err, rows) => err ? reject(err) : resolve(rows)
-      );
-    });
-    if (existingUsers.length > 0) {
-      return { success: false, message: 'Username already taken' };
-    }
-
-    // Hashes password and inserts new user
-    const passwordHash = await bcrypt.hash(password, 10);
-    await new Promise((resolve, reject) => {
-      db.query(
-        'INSERT INTO users (username, password_hash) VALUES (?, ?)',
-        [username, passwordHash],
-        err => err ? reject(err) : resolve()
-      );
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error('Registration error:', error);
-    return { success: false, message: 'Registration failed' };
-  }
-});
-
-// Login handler
-ipcMain.handle('auth-login', async (event, { username, password }) => {
-  if (!username || !password) {
-    return { success: false, message: 'Username and password are required' };
-  }
-  try {
-    // Fetches stored password hash
-    const users = await new Promise((resolve, reject) => {
-      db.query(
-        'SELECT password_hash FROM users WHERE username = ?',
-        [username],
-        (err, rows) => err ? reject(err) : resolve(rows)
-      );
-    });
-    if (users.length === 0) {
-      return { success: false, message: 'Invalid credentials' };
-    }
-
-    const match = await bcrypt.compare(password, users[0].password_hash);
-    if (!match) {
-      return { success: false, message: 'Invalid credentials' };
-    }
-    return { success: true };
-  } catch (error) {
-    console.error('Login error:', error);
-    return { success: false, message: 'Login failed' };
-  }
-});
-
-// Login success handler
-ipcMain.on('auth-login-success', () => {
-  if (loginWindow) {
-    loginWindow.close();
-    loginWindow = null;
-  }
-  createMainWindow();
+// Start Tailwind CLI in watch mode
+require('child_process').exec('npm run build.css', (err, stdout, stderr) => {
+  if (err) console.error('Tailwind Watch Error:', stderr);
+  else console.log('Tailwind Watch Running:', stdout);
 });
 
 // Extract and save application icon
@@ -130,19 +39,103 @@ async function extractAndSaveIcon(filePath) {
   }
 }
 
+// IPC handler to get the app icon
 ipcMain.handle('get-app-icon', (event, exePath) => {
   return extractAndSaveIcon(exePath);
 });
 
-// Start Tailwind CLI in watch mode
-require('child_process').exec('npm run build.css', (err, stdout, stderr) => {
-  if (err) console.error('Tailwind Watch Error:', stderr);
-  else console.log('Tailwind Watch Running:', stdout);
+// IPC handlers for authentication
+// Registration handler
+ipcMain.handle('auth-register', async (event, { username, password }) => {
+  if (!username || !password) {
+    return { success: false, message: 'Username and password are required' };
+  }
+  try {
+    const [existingUsers] = await db.query(
+      'SELECT id FROM users WHERE username = ?',
+      [username]
+    );
+    if (existingUsers.length > 0) {
+      return { success: false, message: 'Username already taken' };
+    }
+    const passwordHash = await bcrypt.hash(password, 10);
+    await db.query(
+      'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+      [username, passwordHash]
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error('Registration error:', error);
+    return { success: false, message: error.message || 'Registration failed' };
+  }
 });
 
-// Overlay window and positioning
+// Login handler
+ipcMain.handle('auth-login', async (event, { username, password }) => {
+  try {
+    const [rows] = await db.execute(
+      `SELECT 
+         id, 
+         password_hash, 
+         level, 
+         xp, 
+         tasks_completed, 
+         streak_days 
+       FROM users 
+       WHERE username = ?`,
+      [username]
+    );
+
+    if (rows.length === 0) {
+      return { success: false, message: 'Invalid username or password' };
+    }
+
+    const {
+      id,
+      password_hash,
+      level,
+      xp,
+      tasks_completed,
+      streak_days
+    } = rows[0];
+
+    const match = await bcrypt.compare(password, password_hash);
+    if (!match) {
+      return { success: false, message: 'Invalid username or password' };
+    }
+    
+    return {
+      success: true,
+      userId: id,
+      level,
+      experience: xp,
+      tasksCompleted: tasks_completed,
+      streakDays: streak_days
+    };
+  } catch (err) {
+    console.error('Login error:', err);
+    return { success: false, message: 'Login failed' };
+  }
+});
+
+// Login success handler
+ipcMain.on('auth-login-success', (event, userId) => {
+  currentUserId = userId;
+  if (loginWindow) {
+    loginWindow.close();
+    loginWindow = null;
+  }
+  createMainWindow();
+});
+
+// Gets the current active window info
+ipcMain.handle('get-active-win-info', async () => {
+  return await activeWin({ includeIcon: true });
+});
+
+// OVERLAY WINDOW 
 let overlayWindow;
-let hideTimer = null;  // debounce handler 
 function createOverlayWindow() {
   overlayWindow = new BrowserWindow({
     width: 300,
@@ -157,81 +150,90 @@ function createOverlayWindow() {
       nodeIntegration: true,
       contextIsolation: true,
     },
+    show: true
   });
   overlayWindow.loadFile(path.join(__dirname, '/overlay.html'));
-  overlayWindow.hide();
+  overlayWindow.setOpacity(0);
 }
 
+// UPDATE OVERLAY BOUNDS FOR DISTRACTING APPS
 async function updateOverlayBounds(win) {
   try {
+    if (!currentUserId) return;
+
     const winInfo = await activeWin();
-    if (!winInfo || !winInfo.bounds) return;
+    if (!winInfo?.bounds) return;
+
+    const [resultSets] = await db.execute(
+      'CALL proc_get_distracting_apps(?)',
+      [currentUserId]
+    );
+    const rows = Array.isArray(resultSets[0]) ? resultSets[0] : resultSets;
+
+    const activeAppName = winInfo.owner.name
+      .replace(/\.exe$/i, '')
+      .trim()
+      .toLowerCase();
+
+    const isDistracting = rows.some(r =>
+      r.app_name.toLowerCase() === activeAppName
+    );
+    const shouldShow = isDistracting && focusTimerActive;
+    overlayWindow.setOpacity(shouldShow ? 1 : 0);
+
+    if (!shouldShow) return;
+
     const { x, y, width, height } = winInfo.bounds;
     const display = screen.getDisplayMatching(winInfo.bounds);
-    const { scaleFactor, bounds: db } = display;
-    const dipX = Math.round(db.x + (x - db.x) / scaleFactor);
-    const dipY = Math.round(db.y + (y - db.y) / scaleFactor);
-    const dipW = Math.round(width / scaleFactor);
+    const { scaleFactor, bounds: dbb } = display;
+    const dipX = Math.round(dbb.x + (x - dbb.x) / scaleFactor);
+    const dipY = Math.round(dbb.y + (y - dbb.y) / scaleFactor);
+    const dipW = Math.round(width  / scaleFactor);
     const dipH = Math.round(height / scaleFactor);
+
     win.setBounds({ x: dipX, y: dipY, width: dipW, height: dipH });
-    const activeAppName = winInfo.owner.name.replace('.exe', '').trim();
-    const isDistracting = globalData.distractingApps
-      .some(app => app.toLowerCase() === activeAppName.toLowerCase());
+  }
+  catch (err) {
+    console.error('Error in updateOverlayBounds:', err);
+  }
+}
 
-      const shouldShow = isDistracting && focusTimerActive;
-
-      if (shouldShow) {
-        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-        if (!overlayWindow.isVisible()) overlayWindow.show();
-      } else {
-        if (!hideTimer) {
-          hideTimer = setTimeout(() => {
-            overlayWindow.hide();
-            hideTimer = null;
-          }, 200);
-        }
-      }
-    } catch (err) {
-      console.error('Error updating overlay bounds:', err);
+// Creates the login window
+function createLoginWindow() {
+  loginWindow = new BrowserWindow({
+    width: 400,
+    height: 500,
+    frame: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
     }
-  }
+  });
+  loginWindow.loadFile(path.join(__dirname, 'authentication.html'));
+}
 
-  // Creates the login window
-  function createLoginWindow() {
-    loginWindow = new BrowserWindow({
-      width: 400,
-      height: 500,
-      frame: false,
-      webPreferences: {
-        preload: path.join(__dirname, 'preload.js'),
-        contextIsolation: true,
-        nodeIntegration: false
-      }
-    });
-    loginWindow.loadFile(path.join(__dirname, 'authentication.html'));
-  }
-  
-  // Creates the main application window
-  function createMainWindow() {
-    mainWindow = new BrowserWindow({
-      width: 800,
-      height: 600,
-      frame: false,
-      titleBarStyle: 'hidden',
-      autoHideMenuBar: true,
-      webPreferences: {
-        preload: path.join(__dirname, 'preload.js'),
-        contextIsolation: true,
-        nodeIntegration: false
-      }
-    });
-    mainWindow.loadFile(path.join(__dirname, 'index.html'));
+// Creates the main application window
+function createMainWindow() {
+  mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    frame: false,
+    titleBarStyle: 'hidden',
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-    createOverlayWindow();
-    updateOverlayBounds(overlayWindow);
-    setInterval(() => updateOverlayBounds(overlayWindow), 100);
-  }
-  
+  createOverlayWindow();
+  updateOverlayBounds(overlayWindow);
+  setInterval(() => updateOverlayBounds(overlayWindow), 100);
+}
+
 // Loads the login window first 
 app.whenReady().then(() => {
   createLoginWindow();
@@ -256,36 +258,22 @@ ipcMain.on('win-toggle-max', () => {
   win.isMaximized() ? win.unmaximize() : win.maximize();
 });
 
-// IPC handlers for global data
-ipcMain.handle('get-global-data', () => globalData);
-ipcMain.handle('add-distracting-app', (event, appName) => {
-  if (
-    appName &&
-    !globalData.distractingApps.some(
-      app => app.toLowerCase() === appName.toLowerCase()
-    )
-  ) {
-    globalData.distractingApps.push(appName);
-    BrowserWindow.getAllWindows().forEach(w =>
-      w.webContents.send('global-data-updated', globalData)
-    );
-  }
-  return globalData;
-});
 
-// IPC handler to remove a distracting app
-ipcMain.handle('remove-distracting-app', (event, appName) => {
-  if (appName && globalData.distractingApps.includes(appName)) {
-    globalData.distractingApps = globalData.distractingApps.filter(a => a !== appName);
-    BrowserWindow.getAllWindows().forEach(w =>
-      w.webContents.send('global-data-updated', globalData)
-    );
-  }
-  return globalData;
-});
 // IPC handler to set focus timer state
 ipcMain.on('focus-timer-state', (event, isActive) => {
   focusTimerActive = isActive;
+});
+
+// IPC handler to pause the timer in the overlay window
+ipcMain.on('overlay-pause', () => {
+  if (mainWindow && !mainWindow.isDestroyed())
+    mainWindow.webContents.send('pause-timer');
+});
+
+// IPC handler to send timer updates to the overlay window
+ipcMain.on('timer-update', (event, time, isBreak) => {
+  if (overlayWindow && !overlayWindow.isDestroyed())
+    overlayWindow.webContents.send('timer-update', time, isBreak);
 });
 
 // IPC handler to close the distracting app window
@@ -293,18 +281,10 @@ ipcMain.handle('close-active-window', async () => {
   const winInfo = await activeWin();
   if (winInfo?.owner?.processId) {
     try {
-      // Closes the distracting app 
       process.kill(winInfo.owner.processId);
-
-      // Cancels any pending hide timeout and hides overlay window 
-      if (hideTimer) {
-        clearTimeout(hideTimer);
-        hideTimer = null;
-      }
       if (overlayWindow && overlayWindow.isVisible()) {
         overlayWindow.hide();
       }
-
       return true;
     } catch (e) {
       console.error('Failed to close process', e);
@@ -313,12 +293,212 @@ ipcMain.handle('close-active-window', async () => {
   return false;
 });
 
-ipcMain.on('overlay-pause', () => {
-  if (mainWindow && !mainWindow.isDestroyed())
-    mainWindow.webContents.send('pause-timer');
+// IPC handlers for Database
+
+// CREATE FOLDER
+ipcMain.handle('db:createFolder', async (event, userId, folderName) => {
+  try {
+    await db.execute('CALL proc_create_folder(?, ?)', [userId, folderName]);
+    return { success: true };
+  } catch (err) {
+    console.error('Create folder error:', err);
+    return { success: false };
+  }
 });
 
-ipcMain.on('timer-update', (event, time, isBreak) => {
-  if (overlayWindow && !overlayWindow.isDestroyed())
-    overlayWindow.webContents.send('timer-update', time, isBreak);
+// GET FOLDERS
+ipcMain.handle('db:getFolders', async (event, userId) => {
+  try {
+    const [rows] = await db.execute('CALL proc_get_folders(?)', [userId]);
+    return rows[0];
+  } catch (err) {
+    console.error('Get folders error:', err);
+    return [];
+  }
 });
+
+// UPDATE FOLDER
+ipcMain.handle('db:updateFolder', async (event, folderId, newName) => {
+  try {
+    await db.execute('CALL proc_update_folder(?, ?)', [folderId, newName]);
+    return { success: true };
+  } catch (err) {
+    console.error('Update folder error:', err);
+    return { success: false };
+  }
+});
+
+// DELETE FOLDER
+ipcMain.handle('db:deleteFolder', async (event, folderId) => {
+  try {
+    await db.execute('CALL proc_delete_folder(?)', [folderId]);
+    return { success: true };
+  } catch (err) {
+    console.error('Delete folder error:', err);
+    return { success: false };
+  }
+});
+
+// CREATE TASK
+ipcMain.handle('db:createTask', async (event, folderId, title, due, priority, status) => {
+  try {
+    await db.execute('CALL proc_create_task(?, ?, ?, ?, ?)', [folderId, title, due, priority, status]);
+    return { success: true };
+  } catch (err) {
+    console.error('Create task error:', err);
+    return { success: false };
+  }
+});
+
+// GET TASKS FOR USER
+ipcMain.handle('db:getTasks', async (event, userId) => {
+  try {
+    const [rows] = await db.execute('CALL proc_get_tasks_for_user(?)', [userId]);
+    return rows[0];
+  } catch (err) {
+    console.error('Get tasks error:', err);
+    return [];
+  }
+});
+
+// COMPLETE TASK
+ipcMain.handle('db:completeTask', async (event, taskId) => {
+  try {
+    await db.execute('CALL proc_complete_task(?)', [taskId]);
+    return { success: true };
+  } catch (err) {
+    console.error('Complete task error:', err);
+    return { success: false };
+  }
+});
+
+// ADD APP USAGE
+ipcMain.handle('db:addAppUsage', async (event, userId, appName, minutes) => {
+  try {
+    await db.execute('CALL proc_add_app_usage(?, ?, ?)', [userId, appName, minutes]);
+    return { success: true };
+  } catch (err) {
+    console.error('Add app usage error:', err);
+    return { success: false };
+  }
+});
+
+// GET APP USAGE
+ipcMain.handle('db:getAppUsage', async (event, userId) => {
+  try {
+    const [rows] = await db.execute('CALL proc_get_app_usage(?)', [userId]);
+    return rows[0];
+  } catch (err) {
+    console.error('Get app usage error:', err);
+    return [];
+  }
+});
+
+// ADD DISTRACTING APP
+ipcMain.handle('db:addDistractingApp', async (event, userId, appName) => {
+  try {
+    await db.execute('CALL proc_add_distracting_app(?, ?)', [userId, appName]);
+    return { success: true };
+  } catch (err) {
+    console.error('Add distracting app error:', err);
+    return { success: false };
+  }
+});
+
+// GET DISTRACTING APPS
+ipcMain.handle('db:getDistractingApps', async (event, userId) => {
+  try {
+    const [rows] = await db.execute('CALL proc_get_distracting_apps(?)', [userId]);
+    return rows[0];
+  } catch (err) {
+    console.error('Get distracting apps error:', err);
+    return [];
+  }
+});
+
+// REMOVE DISTRACTING APP
+ipcMain.handle('db:removeDistractingApp', async (event, userId, appName) => {
+  try {
+    await db.execute('CALL proc_remove_distracting_app(?, ?)', [userId, appName]);
+    return { success: true };
+  } catch (err) {
+    console.error('Remove distracting app error:', err);
+    return { success: false };
+  }
+});
+
+// ADD FOCUS TIME
+ipcMain.handle('db:addFocusTime', async (event, userId, minutes) => {
+  try {
+    await db.execute('CALL proc_add_focus(?, ?)', [userId, minutes]);
+    return { success: true };
+  } catch (err) {
+    console.error('Add focus time error:', err);
+    return { success: false };
+  }
+});
+
+// GET FOCUS SESSIONS
+ipcMain.handle('db:getFocusSessions', async (event, userId) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT session_date, FLOOR(total_seconds / 60) AS minutes FROM focus_sessions WHERE user_id = ? ORDER BY session_date',
+      [userId]
+    );
+    return rows;
+  } catch (err) {
+    console.error('Get focus sessions error:', err);
+    return [];
+  }
+});
+
+// ADD XP
+ipcMain.handle('db:addXP', async (event, userId, xp) => {
+  try {
+    await db.execute('CALL proc_add_xp(?, ?)', [userId, xp]);
+    return { success: true };
+  } catch (err) {
+    console.error('Add XP error:', err);
+    return { success: false };
+  }
+});
+
+// GET LEADERBOARD
+ipcMain.handle('db:getLeaderboard', async () => {
+  try {
+    const [rows] = await db.query('SELECT * FROM leaderboard ORDER BY level DESC');
+    return rows;
+  } catch (err) {
+    console.error('Get leaderboard error:', err);
+    return [];
+  }
+});
+
+// REFRESH LEADERBOARD
+ipcMain.handle('db:refreshLeaderboard', async () => {
+  try {
+    await db.execute('CALL proc_refresh_leaderboard()');
+    return { success: true };
+  } catch (err) {
+    console.error('Refresh leaderboard error:', err);
+    return { success: false };
+  }
+});
+
+// GET USER STATS
+ipcMain.handle('db:getUserStats', async (event, userId) => {
+  try {
+    const [[stats]] = await db.execute('CALL proc_get_user_stats(?)', [userId]);
+    return stats;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+});
+
+// UPDATE USER STREAK DAYS
+ipcMain.handle('db:updateStreakDays', (event, userId, streak) =>
+  db.execute('CALL proc_update_streak_days(?, ?)', [userId, streak])
+    .then(() => ({ success: true }))
+    .catch(err => ({ success: false, error: err }))
+);

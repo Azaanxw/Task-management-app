@@ -66,14 +66,14 @@
       </button>
     </div>
   </header>
-
+  
   <div class="min-h-screen flex flex-col">
     <main class="flex-1 overflow-auto p-4 pb-16">
       <!-- HOME -->
       <section id="home-section">
         <!-- Title -->
         <header class="w-full flex flex-col items-center my-6">
-          <h1 class="text-4xl font-extrabold text-center mb-8">Task Management App 🎉</h1>
+          <h1 class="text-4xl font-extrabold text-center mb-8">Task Management App</h1>
 
           <!-- Circular Progress-->
           <div class="radial-progress text-primary" id="exp-progress-circle"
@@ -135,7 +135,7 @@
               <h2 class="text-lg font-bold text-center">Folders</h2>
               <div class="flex space-x-2 mt-2">
                 <input type="text" class="input input-ghost w-full" id="folder-name" placeholder="New Folder Name" />
-                <button class="btn btn-neutral" onclick="addFolder()">Add</button>
+                <button id="add-folder-btn" class="btn btn-neutral">Add</button>
               </div>
               <!-- Folders Container -->
               <div id="folders-container" class="mt-4 space-y-2">
@@ -156,18 +156,22 @@
 
         <!-- Currently Active Applications -->
         <section class="mt-8">
-          <h2 class="text-lg font-bold">Currently Active Applications</h2>
-          <ul id="app-usage-list" class="w-full">
-            <!-- Tracked applications and their times will be displayed here -->
-          </ul>
+          <h2 class="text-lg font-bold text-center mb-4">Currently Active Applications</h2>
+          <div class="flex justify-center items-center">
+
+            <ul id="app-usage-list" class="flex flex-col items-center">
+              <!-- Tracked applications and their times will be displayed here -->
+            </ul>
+          </div>
         </section>
+        
         <!-- Distracting Applications Management -->
         <section class="mb-8 bg-base-200 p-6 rounded-lg shadow-xl">
           <h2 class="text-xl font-bold mb-4">Distracting Applications</h2>
           <div class="flex gap-2">
             <input id="distracting-app-input" type="text" placeholder="Enter distracting apps here"
               class="input input-bordered w-full" />
-            <button onclick="addDistractingApp()" class="btn btn-neutral">Add</button>
+              <button id="distracting-app-add-btn" class="btn btn-neutral">Add</button>
           </div>
           <ul id="distracting-app-list" class="mt-4 list-disc list-inside">
             <!-- Current distracting apps will be dynamically listed here -->
@@ -390,6 +394,21 @@
         </button>
       </div>
   </div>
+    <!-- Delete Confirmation Modal -->
+    <input type="checkbox" id="delete-modal" class="modal-toggle" />
+    <div class="modal">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Delete Folder?</h3>
+        <p class="py-4">
+          Are you sure you want to delete this folder and all its tasks? This action cannot be undone.
+        </p>
+        <div class="modal-action">
+          <button id="confirm-delete" class="btn btn-error">Delete</button>
+          <label for="delete-modal" class="btn">Cancel</label>
+        </div>
+      </div>
+    </div>
+  
   </main>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>

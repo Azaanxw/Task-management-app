@@ -27,11 +27,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
     const result = await window.authAPI.login(username, password);
-    if (result.success) {
-      window.authAPI.forceLogin();
-    } else {
+    if (!result.success) {
       showAlert(result.message || 'Login failed', 'error');
+      return;
     }
+    // Stores user id in local storage
+    localStorage.setItem('userId', result.userId);
+  
+    // Redirects to main page
+    window.location.href = 'index.html'; // or whatever your main page is
   });
 
 
@@ -53,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
       registerSection.style.display = 'none';
       loginSection.style.display = 'block';
     } else {
-      showAlert('Registration failed', 'error');
+      showAlert(result.message || 'Registration failed', 'error');
     }
   });
 });

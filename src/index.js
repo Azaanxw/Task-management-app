@@ -373,9 +373,9 @@ ipcMain.handle('db:completeTask', async (event, taskId) => {
 });
 
 // ADD APP USAGE
-ipcMain.handle('db:addAppUsage', async (event, userId, appName, minutes) => {
+ipcMain.handle('db:addAppUsage', async (event, userId, appName, secs) => {
   try {
-    await db.execute('CALL proc_add_app_usage(?, ?, ?)', [userId, appName, minutes]);
+    await db.execute('CALL proc_add_app_usage(?, ?, ?)', [userId, appName, secs]);
     return { success: true };
   } catch (err) {
     console.error('Add app usage error:', err);
@@ -383,13 +383,24 @@ ipcMain.handle('db:addAppUsage', async (event, userId, appName, minutes) => {
   }
 });
 
-// GET APP USAGE
-ipcMain.handle('db:getAppUsage', async (event, userId) => {
+// GET DAILY APP USAGE
+ipcMain.handle('db:getDailyAppUsage', async (e, userId) => {
   try {
-    const [rows] = await db.execute('CALL proc_get_app_usage(?)', [userId]);
+    const [rows] = await db.execute('CALL proc_get_daily_app_usage(?)', [userId]);
     return rows[0];
   } catch (err) {
-    console.error('Get app usage error:', err);
+    console.error(err);
+    return [];
+  }
+});
+
+// GET WEEKLY APP USAGE
+ipcMain.handle('db:getWeeklyAppUsage', async (e, userId) => {
+  try {
+    const [rows] = await db.execute('CALL proc_get_weekly_app_usage(?)', [userId]);
+    return rows[0];
+  } catch (err) {
+    console.error(err);
     return [];
   }
 });

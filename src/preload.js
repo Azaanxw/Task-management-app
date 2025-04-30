@@ -57,8 +57,9 @@ contextBridge.exposeInMainWorld('dbAPI', {
   getFocusSessions: uid => ipcRenderer.invoke('db:getFocusSessions', uid),
 
   // App usage operations
-  getAppUsage: uid => ipcRenderer.invoke('db:getAppUsage', uid),
-  addAppUsage: (uid, app, mins) => ipcRenderer.invoke('db:addAppUsage', uid, app, mins),
+  addAppUsage:       (uid, app, secs) => ipcRenderer.invoke('db:addAppUsage',       uid, app, secs),
+  getDailyAppUsage:  uid =>            ipcRenderer.invoke('db:getDailyAppUsage',  uid),
+  getWeeklyAppUsage: uid =>            ipcRenderer.invoke('db:getWeeklyAppUsage', uid),
   
   // Distracting app operations
   getDistractingApps: uid => ipcRenderer.invoke('db:getDistractingApps', uid),

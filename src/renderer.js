@@ -14,9 +14,11 @@ let streakDays = 0;
 let focusSecondCounter = 0;
 let appSecondCounter = 0;
 let userLevel = 1;
-let userExp   = 0;
+let userExp = 0;
 let pendingDeleteFolderId = null;
 let lastTrackedApp = null;
+let weeklyAppUsageChart = null;
+let currentUsageType = 'daily';
 let appUsageCounter = 0;
 let appUsageData = {};
 let openFolderIds = new Set(); // To track open folders
@@ -31,6 +33,7 @@ const excludedApps = [
   "Application Frame Host",
   "LockApp",
   "ShellHost",
+  "Windows Start Experience Host",
   "Windows Explorer",
   "SearchHost",
 ].map(app => app.toLowerCase());
@@ -110,17 +113,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (savedTheme) {
     document.documentElement.setAttribute('data-theme', savedTheme);
   }
-  
+
   // Gets all the user data 
   try {
     const rawStats = await window.dbAPI.getUserStats(currentUserId);
     const stats = rawStats[0] || rawStats;
     console.log("DB stats:", stats);
     if (stats) {
-      userLevel           = stats.level;
-      userExp             = stats.xp;
+      userLevel = stats.level;
+      userExp = stats.xp;
       totalTasksCompleted = stats.tasks_completed;
-      streakDays          = stats.streak_days;          
+      streakDays = stats.streak_days;
       updateLevelUI();
       updateProfileUI();
     }
@@ -130,20 +133,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAllData();
   // Sets up the event listener for the popup when deleting folders
   document.getElementById('confirm-delete').addEventListener('click', async () => {
-        
-        document.getElementById('delete-modal').checked = false;
-    
-        if (pendingDeleteFolderId != null) {
-          const res = await window.dbAPI.deleteFolder(pendingDeleteFolderId);
-          if (res.success) {
-            await loadAllData();
-            showAlert('Folder deleted', 'success');
-          } else {
-            showAlert('Failed to delete folder', 'error');
-          }
-          pendingDeleteFolderId = null;
-        }
-      });
+
+    document.getElementById('delete-modal').checked = false;
+
+    if (pendingDeleteFolderId != null) {
+      const res = await window.dbAPI.deleteFolder(pendingDeleteFolderId);
+      if (res.success) {
+        await loadAllData();
+        showAlert('Folder deleted', 'success');
+      } else {
+        showAlert('Failed to delete folder', 'error');
+      }
+      pendingDeleteFolderId = null;
+    }
+  });
 });
 
 // Handles navigation between the different sections & updates folder UI
@@ -206,6 +209,67 @@ document.addEventListener('DOMContentLoaded', () => {
   renderFocusChart();
 });
 
+// Handles the toggle between daily and weekly app usage charts
+document.getElementById('usageToggle').addEventListener('click', async (e) => {
+  const btn = e.target;
+  const type = btn.dataset.type;
+  if (!type) return;
+  currentUsageType = type;
+  // Toggles active button styles
+  Array.from(btn.parentElement.children).forEach(b => {
+    b.classList.toggle('btn-active', b === btn);
+  });
+
+  // Shows or hides the correct chart
+  document.getElementById('dailyChartContainer')
+    .classList.toggle('hidden', type !== 'daily');
+  document.getElementById('weeklyChartContainer')
+    .classList.toggle('hidden', type !== 'weekly');
+
+  // Updates the title based on what chart is selected
+  const titleEl = document.getElementById('app-usage-title');
+  titleEl.textContent = type === 'daily'
+    ? 'Daily Application Usage'
+    : 'Weekly Application Usage';
+
+  // Updates the app usage list based on the chart type
+  const listEl = document.getElementById('app-usage-list');
+  if (type === 'daily') {
+    await loadAppUsageFromDatabase();
+  } else {
+    await flushUnsavedAppUsageToDatabase(true);
+    const rows = await window.dbAPI.getWeeklyAppUsage(currentUserId);
+    if (document.getElementById('weeklyAppUsageChart')) {
+      await renderWeeklyAppUsageChart();
+    }
+    const data = rows
+      .map(r => {
+        const secs = r.total_seconds != null
+          ? parseInt(r.total_seconds, 10)
+          : (parseFloat(r.total_minutes) || 0) * 60;
+        const appName = formatAppName(r.app_name);
+        const icon = iconMapping[appName] ?? null;
+        return { app: appName, secs, icon };
+      })
+      .filter(d => !excludedApps.includes(d.app.toLowerCase()))
+      .sort((a, b) => b.secs - a.secs)
+
+    listEl.innerHTML = data.map(d => `
+      <li class="flex justify-between w-72 items-center py-2 border-b last:border-b-0">
+        <div class="flex items-center gap-2">
+          ${d.icon
+        ? `<img src="${d.icon}" class="w-6 h-6 object-contain" onerror="this.style.display='none'">`
+        : ''
+      }
+          <span class="font-semibold">${d.app}</span>
+        </div>
+        <span class="text-sm text-gray-400">${formatTime(d.secs)}</span>
+      </li>
+    `).join('');
+  }
+});
+
+
 // Shows “No data available” when there's nothing to plot
 const noDataPlugin = {
   id: 'noData',
@@ -237,8 +301,8 @@ const noDataPlugin = {
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#6b7280'; 
-    ctx.font = '14px sans-serif'; 
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '14px sans-serif';
     ctx.fillText('No data available', left + width / 2, top + height / 2);
     ctx.restore();
   }
@@ -338,6 +402,21 @@ async function addTask(folderId) {
   else if (!due_date) {
     return showAlert('Task must have a due date', 'error');
   }
+   // Prevents past due dates from being added
+   const today = new Date().toISOString().split('T')[0];
+   if (due_date < today) {
+     return showAlert('Due date cannot be in the past', 'error');
+   }
+ 
+   // Prevents duplicate task names
+   const tasks = await window.dbAPI.getTasks(currentUserId);
+   const duplicate = tasks.some(t =>
+     t.folder_id === folderId &&
+     t.title.trim().toLowerCase() === title.toLowerCase()
+   );
+   if (duplicate) {
+     return showAlert('Task with the same name already exists in this folder', 'error');
+   }
 
   await window.dbAPI.createTask(folderId, title, due_date, priority, status);
 
@@ -355,9 +434,14 @@ async function addTask(folderId) {
 async function onAddFolder() {
   const name = document.getElementById('folder-name').value.trim();
   if (!name) return showAlert('Folder name cannot be empty', 'error');
-  console.log("Creating folder for user:", currentUserId);
+
+  // Prevents duplicate folder names
+  const folders = await window.dbAPI.getFolders(currentUserId);
+  const exists = folders.some(f => f.name.toLowerCase() === name.toLowerCase());
+  if (exists) return showAlert('Folder name already exists', 'error');
+
   await window.dbAPI.createFolder(currentUserId, name);
-  document.getElementById('folder-name').value = '';
+  nameInput.value = '';
   await loadAllData();
 }
 
@@ -365,7 +449,7 @@ async function onAddFolder() {
 async function addTaskAndRefresh(folderId) {
   const newFolderId = await addTask(folderId);
   if (newFolderId) {
-    const parsedId = parseInt(newFolderId, 10); 
+    const parsedId = parseInt(newFolderId, 10);
     await loadFoldersAndTasks(parsedId);
     console.log("Rendering deadlines...");
     console.log("Folders object:", window.folders);
@@ -404,7 +488,7 @@ function renderFoldersUI(folders, tasksByFolder, targetFolderId) {
     // Only renders the target folder that changed
     const folder = folders.find(f => f.id === targetFolderId);
     if (folder) {
-      const { collapseContentHTML } = renderSingleFolder(folder, tasksByFolder, openFolderIds); 
+      const { collapseContentHTML } = renderSingleFolder(folder, tasksByFolder, openFolderIds);
       const existingFolder = container.querySelector(`[data-folder-id="${targetFolderId}"]`);
       if (existingFolder) {
         // Updates the existing inner folder content
@@ -438,8 +522,8 @@ function attachEventListeners() {
       const openIds = new Set(
         JSON.parse(localStorage.getItem('openFolderIds') || '[]')
       );
-      if (detail.open)    openIds.add(folderId);
-      else                openIds.delete(folderId);
+      if (detail.open) openIds.add(folderId);
+      else openIds.delete(folderId);
       localStorage.setItem(
         'openFolderIds',
         JSON.stringify(Array.from(openIds))
@@ -477,7 +561,8 @@ function renderSingleFolder(folder, tasksByFolder, openFolderIds) {
       <div class="flex flex-col">
         <label class="label mb-1"><span class="label-text">Date</span></label>
         <input type="date" id="due-input-${folder.id}"
-               class="input input-sm input-bordered w-full">
+       class="input input-sm input-bordered w-full"
+       min="${new Date().toISOString().split('T')[0]}">
       </div>
       <div class="flex flex-col">
         <label class="label mb-1"><span class="label-text">Priority</span></label>
@@ -634,18 +719,18 @@ function renderTaskList(tasks) {
   return `
     <ul class="space-y-2">
       ${tasks.map(task => {
-        const pending = removalTimers[task.id] !== undefined;
-        const btnClass = pending
-          ? 'btn-warning'
-          : (task.completed ? 'btn-warning' : 'btn-success');
-        const btnText = pending
-          ? 'Undo'
-          : (task.completed ? 'Undo' : 'Complete');
-        const liStyle = pending
-          ? 'transition:opacity 3s linear; opacity:0;'
-          : '';
+    const pending = removalTimers[task.id] !== undefined;
+    const btnClass = pending
+      ? 'btn-warning'
+      : (task.completed ? 'btn-warning' : 'btn-success');
+    const btnText = pending
+      ? 'Undo'
+      : (task.completed ? 'Undo' : 'Complete');
+    const liStyle = pending
+      ? 'transition:opacity 3s linear; opacity:0;'
+      : '';
 
-        return `
+    return `
         <li class="bg-base-300 p-3 rounded-lg shadow-sm" style="${liStyle}">
           <div class="flex justify-between items-center">
             <span class="${task.completed || pending ? 'line-through text-gray-400' : 'font-semibold'}">
@@ -664,7 +749,7 @@ function renderTaskList(tasks) {
           </div>
         </li>
         `;
-      }).join('')}
+  }).join('')}
     </ul>
   `;
 }
@@ -776,11 +861,11 @@ async function renderFocusChart() {
   // Groups focus time by weekday
   for (const entry of data) {
     const weekday = new Date(entry.session_date).getDay();
-    weeklyFocusData[weekday] = entry.minutes * 60; 
+    weeklyFocusData[weekday] = entry.minutes * 60;
   }
 
   const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const values = labels.map((_, i) => weeklyFocusData[(i + 1) % 7] || 0); 
+  const values = labels.map((_, i) => weeklyFocusData[(i + 1) % 7] || 0);
 
   const maxSec = Math.max(...values, 10);
   const step = maxSec < 60 ? 10 : maxSec < 3600 ? 60 : 600;
@@ -867,6 +952,7 @@ async function renderDistractingApps() {
   document.querySelectorAll('.del-app').forEach(btn => {
     btn.onclick = async () => {
       await window.dbAPI.removeDistractingApp(currentUserId, btn.dataset.app);
+      showAlert('Distracting app removed successfully!', 'success');
       await renderDistractingApps();
     };
   });
@@ -881,12 +967,13 @@ async function onAddDistractingApp() {
   // Prevents duplicate apps being added
   const existing = await window.dbAPI.getDistractingApps(currentUserId);
   if (existing.some(i => i.app_name.toLowerCase() === app.toLowerCase())) {
-    showAlert('Application already in the distracting list', 'error');
+    showAlert('App already in the distracting list', 'error');
     return;
   }
 
   await window.dbAPI.addDistractingApp(currentUserId, app);
   txt.value = '';
+  showAlert('Distracting app added successfully!', 'success');
   await renderDistractingApps();
 }
 
@@ -930,7 +1017,7 @@ async function startTimer() {
         focusSecondCounter++;
 
         const now = new Date();
-        const weekday = now.getDay(); 
+        const weekday = now.getDay();
         weeklyFocusData[weekday] += 1;
 
         if (focusChart) {
@@ -980,7 +1067,7 @@ async function startTimer() {
 }
 
 // Function to pause the timer 
-async function pauseTimer() {  
+async function pauseTimer() {
   if (timer && !isPaused) {
     clearInterval(timer);
     timer = null;
@@ -1049,10 +1136,10 @@ function updateCircleProgress() {
   const progress = 1 - (timeRemaining / (isBreak ? breakTime : focusTime)); // Flips progress calculation for clockwise motion
   progressCircle.style.strokeDasharray = `${circumference}`;
   progressCircle.style.strokeDashoffset = `${circumference * progress}`;
-  progressCircle.style.transform = "rotate(270deg) scale(1, -1)"; 
+  progressCircle.style.transform = "rotate(270deg) scale(1, -1)";
   progressCircle.style.transformOrigin = "center";
-  progressCircle.style.stroke = isBreak ? "green" : "blue"; 
-  progressCircle.style.display = "block"; 
+  progressCircle.style.stroke = isBreak ? "green" : "blue";
+  progressCircle.style.display = "block";
   progressCircle.style.margin = "0 auto";
 }
 
@@ -1110,20 +1197,29 @@ async function trackApplicationUsage() {
 
   // Increments only the unsaved localTime
   appUsageData[appName].localTime += 1;
-
+ 
   // Flushes data every 30s
   appSecondCounter += 1;
   if (appSecondCounter >= 30) {
     await flushUnsavedAppUsageToDatabase();
     appSecondCounter = 0;
   }
-  renderAppUsage();
-  updateChart();
+  if (currentUsageType === 'weekly') {
+    renderWeeklyUsageList();
+    renderWeeklyAppUsageChart();
+  }
+  else {
+    renderAppUsage();
+    updateChart();
+  }
 }
+
+// Calls `trackApplicationUsage` every second
+setInterval(trackApplicationUsage, 1000);
 
 // Formats the app names 
 function formatAppName(appName) {
-  if (!appName || !appName.trim()) return "Unknown"; 
+  if (!appName || !appName.trim()) return "Unknown";
   let formatted = appName.replace(/\.exe$/i, "");
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
@@ -1136,6 +1232,130 @@ function formatTime(seconds) {
   return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+// Renders the weekly app usage chart
+async function renderWeeklyAppUsageChart() {
+  if (!currentUserId) return;
+
+  // Formats seconds into readable time (HH:MM:SS)
+  const fmt = v => {
+    if (v < 60) return `${v}s`;
+    if (v < 3600) {
+      const m = Math.floor(v / 60), s = v % 60;
+      return s ? `${m}m ${s}s` : `${m}m`;
+    }
+    const h = Math.floor(v / 3600), m = Math.floor((v % 3600) / 60);
+    return m ? `${h}h ${m}m` : `${h}h`;
+  };
+
+  try {
+    const rows = await window.dbAPI.getWeeklyAppUsage(currentUserId);
+
+    const data = rows
+  .map(r => {
+    const name = formatAppName(r.app_name);
+    const dbSecs = r.total_seconds != null
+      ? parseInt(r.total_seconds, 10)
+      : (parseFloat(r.total_minutes) || 0) * 60;
+    const localSecs = appUsageData[name]?.localTime || 0;
+    return { app: name, secs: dbSecs + localSecs };
+  })
+  .filter(d => !excludedApps.includes(d.app.toLowerCase()))    
+  .sort((a, b) => b.secs - a.secs)
+      .slice(0, 5);
+      
+
+    const labels = data.map(d => d.app);
+    const values = data.map(d => d.secs);
+
+    const maxSec = Math.max(...values, 1);
+    const step = maxSec < 60 ? 10 : maxSec < 3600 ? 60 : 600;
+    const chartMax = step * Math.ceil(maxSec / step);
+
+    const ctx = document.getElementById('weeklyAppUsageChart').getContext('2d');
+    if (!weeklyAppUsageChart) {
+      weeklyAppUsageChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels, datasets: [{
+            data: values,
+            backgroundColor: 'rgba(0,102,255,0.8)',
+            borderColor: 'rgba(0,85,204,1)',
+            borderWidth: 1,
+            borderRadius: 10,
+            barThickness: 100
+          }]
+        },
+        options: {
+          maintainAspectRatio: false,
+          responsive: true,
+          animation: { duration: 500 },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: chartMax,
+              ticks: { stepSize: step, callback: fmt },
+              grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: {
+                font: { size: 14, weight: 'bold', family: 'Inter, sans-serif' },
+                color: '#A0AEC0'
+              }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => fmt(ctx.parsed.y) } }
+          }
+        }
+      });
+    } else {
+      weeklyAppUsageChart.data.labels = labels;
+      weeklyAppUsageChart.data.datasets[0].data = values;
+      weeklyAppUsageChart.options.scales.y.max = chartMax;
+      weeklyAppUsageChart.options.scales.y.ticks.stepSize = step;
+      weeklyAppUsageChart.update({ duration: 500, easing: 'easeOutQuart' });
+    }
+
+  } catch (err) {
+    console.error('renderWeeklyAppUsageChart error:', err);
+  }
+}
+
+// Renders the weekly app usage list
+async function renderWeeklyUsageList() {
+  const listEl = document.getElementById('app-usage-list');
+  if (!listEl) return;
+
+  const rows = await window.dbAPI.getWeeklyAppUsage(currentUserId);
+  const data = rows
+  .map(r => {
+    const appName = formatAppName(r.app_name);
+    const dbSecs = r.total_seconds != null
+      ? parseInt(r.total_seconds, 10)
+      : (parseFloat(r.total_minutes) || 0) * 60;
+    const localSecs = appUsageData[appName]?.localTime || 0;
+    const icon = iconMapping[appName] ?? null;
+    return { app: appName, secs: dbSecs + localSecs, icon };
+  })
+  .filter(d => !excludedApps.includes(d.app.toLowerCase()))
+    .sort((a, b) => b.secs - a.secs);
+
+  listEl.innerHTML = data.map(d => `
+    <li class="flex justify-between w-72 items-center py-2 border-b last:border-b-0">
+      <div class="flex items-center gap-2">
+        ${d.icon
+      ? `<img src="${d.icon}" class="w-6 h-6 object-contain" onerror="this.style.display='none'">`
+      : ''
+    }
+        <span class="font-semibold">${d.app}</span>
+      </div>
+      <span class="text-sm text-gray-400">${formatTime(d.secs)}</span>
+    </li>
+  `).join('');
+}
+
 // Loads app usage data from the database
 async function loadAppUsageFromDatabase() {
   if (!currentUserId) return;
@@ -1143,19 +1363,18 @@ async function loadAppUsageFromDatabase() {
   // Keeps any localTime that isnt updated to the DB
   const oldData = appUsageData;
   const fresh = {};
-  
+
 
   // Fetches app usage data from the database and merges it with local data
   try {
-    const rows = await window.dbAPI.getAppUsage(currentUserId);
+    const rows = await window.dbAPI.getDailyAppUsage(currentUserId);
     for (const r of rows) {
       const name = formatAppName(r.app_name);
-      const saved = r.total_seconds != null
+      const seconds = r.total_seconds != null
         ? parseInt(r.total_seconds, 10)
         : (parseFloat(r.total_minutes) || 0) * 60;
-      let icon = iconMapping[name] ?? null;
-      const oldLocal = oldData[name]?.localTime || 0;
-      fresh[name] = { dbTime: saved, localTime: oldLocal, icon };
+      const icon = iconMapping[name] ?? null;
+      fresh[name] = { dbTime: seconds, localTime: 0, icon };
     }
     appUsageData = fresh;
     renderAppUsage();
@@ -1183,8 +1402,13 @@ async function flushUnsavedAppUsageToDatabase() {
   if (promises.length === 0) return;
 
   await Promise.all(promises);
-  // Reloads app usage data from the database to be consistent with the data in the UI
-  await loadAppUsageFromDatabase();
+  // Reloads whichever view the user is on
+  if (currentUsageType === 'daily') {
+    await loadAppUsageFromDatabase();      // Daily list + chart
+  } else {
+    await renderWeeklyUsageList();         // weekly list 
+    await renderWeeklyAppUsageChart();     // weekly chart 
+  }
 }
 
 setInterval(flushUnsavedAppUsageToDatabase, 30000);
@@ -1200,7 +1424,7 @@ function renderAppUsage() {
     .sort(([, a], [, b]) =>
       (b.dbTime + b.localTime) - (a.dbTime + a.localTime)
     )
-    .slice(0, 5)
+
     .map(([app, { dbTime, localTime, icon }]) => {
       const totalSec = dbTime + localTime;
       return `
@@ -1215,11 +1439,8 @@ function renderAppUsage() {
     }).join('');
 }
 
-// Calls `trackApplicationUsage` every second
-setInterval(trackApplicationUsage, 1000);
-
 // Graph for time spent on each application
-let appUsageChart = null; 
+let appUsageChart = null;
 
 // Updates the chart with the latest app usage data
 function updateChart() {
@@ -1227,9 +1448,9 @@ function updateChart() {
 
   // Sorts out the top 5 apps by time spent
   const sorted = Object.entries(appUsageData)
-  .filter(([app]) => !excludedApps.includes(app.toLowerCase()))   // Filters out the excluded apps
-  .sort(([, a], [, b]) => (b.dbTime + b.localTime) - (a.dbTime + a.localTime))
-  .slice(0, 5);
+    .filter(([app]) => !excludedApps.includes(app.toLowerCase()))   // Filters out the excluded apps
+    .sort(([, a], [, b]) => (b.dbTime + b.localTime) - (a.dbTime + a.localTime))
+    .slice(0, 5);
 
   const labels = sorted.map(([app]) => app);
   const values = sorted.map(([, { dbTime, localTime }]) => dbTime + localTime);
@@ -1319,13 +1540,13 @@ async function toggleTaskCompletion(taskId) {
   if (!btn) return;
   const li = btn.closest('li');
   const details = li.closest('details');
-  const folderId = details.dataset.folderId;   
+  const folderId = details.dataset.folderId;
   const folderIdNum = parseInt(folderId, 10);
   const isUndo = btn.textContent.trim() === 'Undo';
 
   if (!isUndo) {
     btn.textContent = 'Undo';
-    btn.classList.replace('btn-success', 'btn-warning'); 
+    btn.classList.replace('btn-success', 'btn-warning');
     awardExp(20);
     renderDeadlines();
     updateProfileUI();
@@ -1333,7 +1554,7 @@ async function toggleTaskCompletion(taskId) {
     // Fades out the task item
     li.style.transition = 'opacity 3s linear';
     li.style.opacity = '0';
-    
+
     removalTimers[taskId] = setTimeout(async () => {
       await window.dbAPI.completeTask(taskId);
       totalTasksCompleted++;
@@ -1495,7 +1716,7 @@ function showExpAnimation(amount) {
   const el = document.createElement('div');
   el.innerText = `+${amount} XP!`;
 
-   // Random position near center & rotation
+  // Random position near center & rotation
   const randomOffsetX = (Math.random() - 0.5) * 200;
   const randomOffsetY = (Math.random() - 0.5) * 100;
   const randomRotation = (Math.random() - 0.5) * 40;

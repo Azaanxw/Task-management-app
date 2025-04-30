@@ -43,13 +43,12 @@ CREATE TABLE IF NOT EXISTS distracting_apps (
 
 -- Application usage
 CREATE TABLE IF NOT EXISTS app_usage_totals (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
-  app_name VARCHAR(255) NOT NULL,
-  total_seconds INT NOT NULL DEFAULT 0,
-  last_updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  UNIQUE KEY (user_id, app_name)
+  user_id        INT          NOT NULL,
+  app_name       VARCHAR(255) NOT NULL,
+  daily_seconds  INT          NOT NULL DEFAULT 0,
+  record_date    DATE         NOT NULL DEFAULT (CURDATE()),
+  PRIMARY KEY(user_id, app_name, record_date),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Leaderboard 
@@ -219,20 +218,48 @@ BEGIN
 END$$
 
 -- Adds app usage time for a user
-CREATE PROCEDURE proc_add_app_usage(IN p_user_id INT, IN p_app VARCHAR(255), IN p_seconds INT)
+CREATE PROCEDURE proc_add_app_usage(
+  IN p_user_id    INT,
+  IN p_app        VARCHAR(255),
+  IN p_seconds    INT
+)
 BEGIN
-  INSERT INTO app_usage_totals(user_id, app_name, total_seconds)
-    VALUES(p_user_id, p_app, p_seconds)
-    ON DUPLICATE KEY
-    UPDATE total_seconds = total_seconds + p_seconds;
+  INSERT INTO app_usage_totals
+    (user_id, app_name, daily_seconds, record_date)
+  VALUES
+    (p_user_id, p_app, p_seconds, CURDATE())
+  ON DUPLICATE KEY
+    UPDATE daily_seconds = daily_seconds + p_seconds;
 END$$
 
--- Returns app usage time for a user
-CREATE PROCEDURE proc_get_app_usage(IN p_user_id INT)
+-- Returns app usage time for a user for today
+CREATE PROCEDURE proc_get_daily_app_usage(
+  IN p_user_id INT
+)
 BEGIN
-  SELECT * FROM app_usage_totals WHERE user_id = p_user_id;
+  SELECT
+    app_name,
+    daily_seconds AS total_seconds
+  FROM app_usage_totals
+  WHERE user_id    = p_user_id
+    AND record_date = CURDATE()
+  ORDER BY total_seconds DESC;
 END$$
 
+-- Returns app usage time for a user for this week
+CREATE PROCEDURE proc_get_weekly_app_usage(
+  IN p_user_id INT
+)
+BEGIN
+  SELECT
+    app_name,
+    SUM(daily_seconds) AS total_seconds
+  FROM app_usage_totals
+  WHERE user_id    = p_user_id
+    AND record_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+  GROUP BY app_name
+  ORDER BY total_seconds DESC;
+END$$
 
 -- Updates leaderboard data for all users
 CREATE PROCEDURE proc_refresh_leaderboard()

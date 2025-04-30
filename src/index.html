@@ -144,39 +144,47 @@
             </div>
           </div>
         </main>
-
-        <!-- Application Tracker Section -->
-        <section class="mt-8">
-          <h2 class="text-lg font-bold">Application Tracker</h2>
-          <div id="chart-container"
-            class="w-full h-[30rem] p-6 bg-base-200 rounded-xl shadow-lg flex items-center justify-center">
-            <canvas id="appUsageChart"></canvas>
-          </div>
-        </section>
-
-        <!-- Currently Active Applications -->
-        <section class="mt-8">
-          <h2 class="text-lg font-bold text-center mb-4">Currently Active Applications</h2>
-          <div class="flex justify-center items-center">
-
-            <ul id="app-usage-list" class="flex flex-col items-center">
-              <!-- Tracked applications and their times will be displayed here -->
-            </ul>
-          </div>
-        </section>
         
-        <!-- Distracting Applications Management -->
-        <section class="mb-8 bg-base-200 p-6 rounded-lg shadow-xl">
-          <h2 class="text-xl font-bold mb-4">Distracting Applications</h2>
-          <div class="flex gap-2">
-            <input id="distracting-app-input" type="text" placeholder="Enter distracting apps here"
-              class="input input-bordered w-full" />
-              <button id="distracting-app-add-btn" class="btn btn-neutral">Add</button>
+        <!-- Application Tracker Section -->
+      <section id="app-tracker-section" class="mt-8">
+        <h2 class="text-lg font-bold mb-4 text-center">Application Tracker</h2>
+        <div class="flex flex-col lg:flex-row gap-6">
+          <!-- Chart Area -->
+          <div id="chart-container" class="w-full lg:w-2/3 p-6 bg-base-200 rounded-xl shadow-lg">
+            <div class="btn-group mb-4 justify-center" id="usageToggle">
+              <button class="btn btn-sm btn-outline btn-active" data-type="daily">Daily</button>
+              <button class="btn btn-sm btn-outline" data-type="weekly">Weekly</button>
+            </div>
+            <div id="dailyChartContainer" class="w-full h-[30rem] flex items-center justify-center">
+              <canvas id="appUsageChart"></canvas>
+            </div>
+            <div id="weeklyChartContainer" class="w-full h-[30rem] flex items-center justify-center hidden">
+              <canvas id="weeklyAppUsageChart"></canvas>
+            </div>
           </div>
-          <ul id="distracting-app-list" class="mt-4 list-disc list-inside">
-            <!-- Current distracting apps will be dynamically listed here -->
-          </ul>
-        </section>
+          <!-- Active Apps & Distracting Apps -->
+          <div class="w-full lg:w-1/3 p-6 bg-base-200 rounded-xl shadow-lg flex flex-col items-center">
+            <h2 id="app-usage-title" class="text-lg font-bold text-center mb-4">
+                 Daily Application Usage
+               </h2>
+               <ul id="app-usage-list" class="space-y-2 text-center max-h-64 overflow-y-auto px-1 pr-2">
+              <!-- Dynamically populated active apps -->
+            </ul>
+            <!-- Distracting Apps Section -->
+            <div class="mt-6 w-full">
+              <h3 class="text-lg font-bold mb-2 text-center">Distracting Applications</h3>
+              <div class="flex gap-2 mb-2">
+                <input id="distracting-app-input" type="text" placeholder="Enter distracting apps here" class="input input-bordered w-full" />
+                <button id="distracting-app-add-btn" class="btn btn-neutral">Add</button>
+              </div>
+              <ul id="distracting-app-list"
+    class="list-disc list-inside max-h-48 overflow-y-auto">
+  <!-- Current distracting apps will be dynamically listed here -->
+</ul>
+            </div>
+          </div>
+        </div>
+      </section>
 
       </section>
 
@@ -200,56 +208,6 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <th>1</th>
-                      <td>Alice</td>
-                      <td>15</td>
-                    </tr>
-                    <tr>
-                      <th>2</th>
-                      <td>Bob</td>
-                      <td>14</td>
-                    </tr>
-                    <tr>
-                      <th>3</th>
-                      <td>Carla</td>
-                      <td>13</td>
-                    </tr>
-                    <tr>
-                      <th>4</th>
-                      <td>David</td>
-                      <td>12</td>
-                    </tr>
-                    <tr>
-                      <th>5</th>
-                      <td>Eva</td>
-                      <td>11</td>
-                    </tr>
-                    <tr>
-                      <th>6</th>
-                      <td>Frank</td>
-                      <td>10</td>
-                    </tr>
-                    <tr>
-                      <th>7</th>
-                      <td>Gina</td>
-                      <td>9</td>
-                    </tr>
-                    <tr>
-                      <th>8</th>
-                      <td>Hank</td>
-                      <td>8</td>
-                    </tr>
-                    <tr>
-                      <th>9</th>
-                      <td>Iris</td>
-                      <td>7</td>
-                    </tr>
-                    <tr>
-                      <th>10</th>
-                      <td>Judy</td>
-                      <td>6</td>
-                    </tr>
                   </tbody>
                 </table>
               </div>

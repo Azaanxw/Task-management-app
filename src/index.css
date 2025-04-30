@@ -65,19 +65,22 @@ div.overflow-y-auto::-webkit-scrollbar {
 }
 
 
-/* Scrollbar for deadlines & folders */
+/* Scrollbar for deadlines, folders,app-usage list & distracting apps */
 #deadlines-list,
-#folder-wrapper {
+#folder-wrapper,
+#app-usage-list,
+#distracting-app-list {
   scrollbar-width: thin !important;
   scrollbar-color: var(--color-base-100) var(--color-base-200) !important;
 }
 
 #deadlines-list::-webkit-scrollbar,
-#folder-wrapper::-webkit-scrollbar {
+#folder-wrapper::-webkit-scrollbar,
+#app-usage-list::-webkit-scrollbar,
+#distracting-app-list::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-
 /* Makes card stand out more */
 .card {
   background-color: var(--color-base-200);

@@ -5,7 +5,8 @@ const mysql = require('mysql2');
 const activeWin = require('active-win');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
-
+let loginWindow = null;
+let mainWindow = null;
 let currentUserId = null;
 let focusTimerActive = false;
 
@@ -126,8 +127,52 @@ ipcMain.on('auth-login-success', (event, userId) => {
     loginWindow.close();
     loginWindow = null;
   }
-  createMainWindow();
+  // Reloads and shows the existing mainWindow if it still exists if not then creates a new main window
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.loadFile(path.join(__dirname, 'index.html')); 
+    mainWindow.show();
+  } else {
+    createMainWindow(); 
+  }
 });
+
+// Password change handler
+ipcMain.handle('auth-change-password', async (event, { currentPassword, newPassword }) => {
+  if (!currentUserId) {
+    return { success: false, message: 'Not authenticated' };
+  }
+
+  try {
+    // Fetches the stored hash
+    const [rows] = await db.execute(
+      'SELECT password_hash FROM users WHERE id = ?',
+      [currentUserId]
+    );
+    if (rows.length === 0) {
+      return { success: false, message: 'User not found' };
+    }
+    const storedHash = rows[0].password_hash;
+
+    // Checks current password
+    const valid = await bcrypt.compare(currentPassword, storedHash);
+    if (!valid) {
+      return { success: false, message: 'Current password incorrect' };
+    }
+
+    // Hashes and updates to the new password
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await db.execute(
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [newHash, currentUserId]
+    );
+
+    return { success: true };
+  } catch (err) {
+    console.error('Change password error:', err);
+    return { success: false, message: 'Password change failed' };
+  }
+});
+
 
 // Gets the current active window info
 ipcMain.handle('get-active-win-info', async () => {
@@ -232,13 +277,18 @@ function createMainWindow() {
   createOverlayWindow();
   updateOverlayBounds(overlayWindow);
   setInterval(() => updateOverlayBounds(overlayWindow), 100);
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 }
 
 // Loads the login window first 
 app.whenReady().then(() => {
   createLoginWindow();
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createLoginWindow();
+    if (windows.length === 0 && !mainWindow && !loginWindow) {
+      createLoginWindow();
+    }
   });
 });
 
@@ -246,7 +296,6 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   app.quit();
 });
-
 
 // IPC handlers for window controls
 ipcMain.on('win-minimise', () => BrowserWindow.getFocusedWindow()?.minimize());
@@ -291,6 +340,11 @@ ipcMain.handle('close-active-window', async () => {
     }
   }
   return false;
+});
+
+// IPC handler to set the transparency of the overlay window
+ipcMain.on('apply-transparency', (event, enabled) => {
+  overlayWindow.webContents.send('apply-transparency', enabled);
 });
 
 // IPC handlers for Database
@@ -492,6 +546,20 @@ ipcMain.handle('db:refreshLeaderboard', async () => {
     return { success: true };
   } catch (err) {
     console.error('Refresh leaderboard error:', err);
+    return { success: false };
+  }
+});
+
+// CHANGE LEADERBOARD VISIBILITY FOR A GIVEN USER
+ipcMain.handle('db:setLeaderboardVisibility', async (event, userId, hide) => {
+  try {
+    await db.execute(
+      'UPDATE users SET hide_from_leaderboard = ? WHERE id = ?',
+      [hide, userId]
+    );
+    return { success: true };
+  } catch (err) {
+    console.error('Leaderboard visibility update error:', err);
     return { success: false };
   }
 });

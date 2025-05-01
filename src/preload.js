@@ -35,7 +35,11 @@ contextBridge.exposeInMainWorld('authAPI', {
 
   getCurrentUserId: () => currentUserId,
   getUserLevel: () => currentUserLevel,
-  getUserExp: () => currentUserExp
+  getUserExp: () => currentUserExp,
+
+  // Changes a users password
+  changePassword: (currentPassword, newPassword) =>
+    ipcRenderer.invoke('auth-change-password', { currentPassword, newPassword }),
 });
 
 // Database API 
@@ -72,7 +76,8 @@ contextBridge.exposeInMainWorld('dbAPI', {
 
   // Leaderboard operations
   getLeaderboard: () => ipcRenderer.invoke('db:getLeaderboard'),
-  refreshLeaderboard: () => ipcRenderer.invoke('db:refreshLeaderboard')
+  refreshLeaderboard: () => ipcRenderer.invoke('db:refreshLeaderboard'),
+  setLeaderboardVisibility: (uid, hide) => ipcRenderer.invoke('db:setLeaderboardVisibility', uid, hide),
 });
 
 // Gets active window info from main process
@@ -115,4 +120,14 @@ contextBridge.exposeInMainWorld('rendererAPI', {
   onPauseCommand: (callback) => ipcRenderer.on('pause-timer', () => callback()),
   setFocusState:    (isActive)      => ipcRenderer.send('focus-timer-state', isActive),
   onPauseCommand:   (callback)      => ipcRenderer.on('pause-timer', () => callback())
+});
+
+// Settings API to change certain settings in the app
+contextBridge.exposeInMainWorld('SettingsAPI', {
+  applyTransparency: (callback) => {
+    ipcRenderer.on('apply-transparency', (event, enabled) => callback(enabled));
+  },
+  sendTransparencySetting: (enabled) => {
+    ipcRenderer.send('apply-transparency', enabled);
+  }
 });

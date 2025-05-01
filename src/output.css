@@ -1789,6 +1789,9 @@
   .transform {
     transform: var(--tw-rotate-x) var(--tw-rotate-y) var(--tw-rotate-z) var(--tw-skew-x) var(--tw-skew-y);
   }
+  .cursor-pointer {
+    cursor: pointer;
+  }
   .resize {
     resize: both;
   }
@@ -2036,6 +2039,9 @@
   .py-4 {
     padding-block: calc(var(--spacing) * 4);
   }
+  .py-8 {
+    padding-block: calc(var(--spacing) * 8);
+  }
   .pt-6 {
     padding-top: calc(var(--spacing) * 6);
   }
@@ -2119,6 +2125,14 @@
   .badge-primary {
     --badge-color: var(--color-primary);
     color: var(--color-primary-content);
+  }
+  .checkbox-primary {
+    color: var(--color-primary-content);
+    --input-color: var(--color-primary);
+  }
+  .checkbox-warning {
+    color: var(--color-warning-content);
+    --input-color: var(--color-warning);
   }
   .progress-primary {
     color: var(--color-primary);
@@ -2216,6 +2230,10 @@
   .btn-error {
     --btn-color: var(--color-error);
     --btn-fg: var(--color-error-content);
+  }
+  .btn-info {
+    --btn-color: var(--color-info);
+    --btn-fg: var(--color-info-content);
   }
   .btn-neutral {
     --btn-color: var(--color-neutral);

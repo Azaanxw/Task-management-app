@@ -33,6 +33,18 @@
       document.getElementById('statusText').innerText =
         isBreak ? 'On Break' : 'Focus time remaining';
     });
+    // Updates transparency for the overlay window depending on the toggle 
+    window.SettingsAPI.applyTransparency((enabled) => {
+  if (enabled) {
+    document.documentElement.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+    document.documentElement.style.backdropFilter = 'blur(6px)';
+    document.body.style.backgroundColor = 'transparent';
+  } else {
+    document.documentElement.style.backgroundColor = '';
+    document.documentElement.style.backdropFilter = '';
+    document.body.style.backgroundColor = '';
+  }
+});
   </script>
 </body>
 

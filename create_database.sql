@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
   xp INT NOT NULL DEFAULT 0,
   tasks_completed INT NOT NULL DEFAULT 0,
   streak_days INT NOT NULL DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  hide_from_leaderboard BOOLEAN NOT NULL DEFAULT FALSE;
 );
 
 -- Folders
@@ -154,6 +155,7 @@ BEGIN
   DELETE FROM folders WHERE id = p_folder_id;
 END$$
 
+-- USER MANAGEMENT
 -- Gets user's stats
 CREATE PROCEDURE proc_get_user_stats(IN p_user_id INT)
 BEGIN
@@ -170,6 +172,17 @@ CREATE PROCEDURE proc_update_streak_days(
 BEGIN
   UPDATE users
      SET streak_days = p_streak
+   WHERE id = p_user_id;
+END$$
+
+-- Change a user’s password hash
+CREATE PROCEDURE proc_change_password (
+  IN p_user_id            INT,
+  IN p_new_password_hash  VARCHAR(255)
+)
+BEGIN
+  UPDATE users
+     SET password_hash = p_new_password_hash
    WHERE id = p_user_id;
 END$$
 
@@ -266,7 +279,9 @@ CREATE PROCEDURE proc_refresh_leaderboard()
 BEGIN
   TRUNCATE TABLE leaderboard;
   INSERT INTO leaderboard(user_id, username, level)
-    SELECT id, username, level FROM users;
+  SELECT id, username, level
+  FROM users
+  WHERE hide_from_leaderboard = FALSE;
 END$$
 
 DELIMITER ;

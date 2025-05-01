@@ -1865,7 +1865,132 @@ async function renderLeaderboard() {
   await window.dbAPI.refreshLeaderboard();
   const rows = await window.dbAPI.getLeaderboard();
   const tbody = document.querySelector('#leaderboard-section table tbody');
+  
+  // Displays message if no users are on the leaderboard
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="3" class="text-center text-gray-400 font-semibold py-8">
+          No users available to compete in the leaderboard
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
   tbody.innerHTML = rows.map((r, i) => `
     <tr><th>${i + 1}</th><td>${r.username}</td><td>${r.level}</td></tr>
   `).join('');
+}
+
+/*
+-------------------------- 
+SETTINGS SECTION
+--------------------------
+*/
+
+// Settings setup 
+document.addEventListener('DOMContentLoaded', () => {
+  // Toggles/buttons
+  const transparencyToggle = document.getElementById('transparencyToggle');
+  const leaderboardCheckbox = document.getElementById('hide-leaderboard');
+  const changePasswordButton = document.getElementById('change-password-button');
+  const logoutButton = document.getElementById('logout-button');
+
+  if (!currentUserId) {
+    console.warn("No currentUserId found");
+    return;
+  }
+
+  // Leaderboard visibility setup
+  if (leaderboardCheckbox) {
+    const hideLeaderboardByUser = JSON.parse(localStorage.getItem('hideLeaderboardByUser') || '{}');
+    const hideLeaderboardState = hideLeaderboardByUser[currentUserId] ?? false;
+    leaderboardCheckbox.checked = hideLeaderboardState;
+    leaderboardCheckbox.addEventListener('change', async (e) => {
+      const hide = e.target.checked;
+      const updated = JSON.parse(localStorage.getItem('hideLeaderboardByUser') || '{}');
+      updated[currentUserId] = hide;
+      localStorage.setItem('hideLeaderboardByUser', JSON.stringify(updated));
+
+      if (currentUserId) {
+        const result = await window.dbAPI.setLeaderboardVisibility(currentUserId, hide);
+        if (!result.success) {
+          console.error('Failed to update leaderboard visibility');
+        } else {
+          await window.dbAPI.refreshLeaderboard();
+          await renderLeaderboard();
+        }
+      }
+    });
+  }
+
+  // TransparencyToggle for overlay window setup
+  if (transparencyToggle) {
+    const transparencyByUser = JSON.parse(localStorage.getItem('transparencyByUser') || '{}');
+    const transparencyState = transparencyByUser[currentUserId] ?? false;
+    transparencyToggle.checked = transparencyState;
+    window.SettingsAPI.sendTransparencySetting(transparencyState);
+
+    transparencyToggle.addEventListener('change', e => {
+      const enabled = e.target.checked;
+      const updated = JSON.parse(localStorage.getItem('transparencyByUser') || '{}');
+      updated[currentUserId] = enabled;
+      localStorage.setItem('transparencyByUser', JSON.stringify(updated));
+      window.SettingsAPI.sendTransparencySetting(enabled);
+    });
+  }
+
+  // Password change button logic
+  changePasswordButton?.addEventListener('click', async () => {
+    const current = await showPrompt('Enter current password:');
+    if (!current) return;
+    const newPwd  = await showPrompt('Enter new password:');
+    if (!newPwd)  return;
+    const confirm = await showPrompt('Confirm new password:');
+    if (newPwd !== confirm) {
+      showAlert('Passwords do not match', 'error');
+      return;
+    }
+    const res = await window.authAPI.changePassword(current, newPwd);
+    if (res.success) {
+      showAlert('Password changed!', 'success');
+    } else {
+      showAlert(res.message || 'Password change failed', 'error');
+    }
+  });
+
+  // Logout button logic
+  logoutButton?.addEventListener('click', () => {
+    localStorage.removeItem('userId');
+    location.href = 'authentication.html';
+  });
+});
+
+// Password change popup prompt setup
+async function showPrompt(message) {
+  return new Promise((resolve) => {
+    const toggle = document.getElementById('prompt-modal-toggle');
+    const modal = document.getElementById('prompt-modal');
+    const label = document.getElementById('prompt-modal-label');
+    const input = document.getElementById('prompt-modal-input');
+    const btnConfirm = modal.querySelector('.btn-confirm');
+    const btnCancel = modal.querySelector('.btn-cancel');
+
+    label.innerText = message;
+    toggle.checked = true;
+    input.value = '';
+    input.focus();
+
+    function cleanup() {
+      btnConfirm.removeEventListener('click', onConfirm);
+      btnCancel.removeEventListener('click', onCancel);
+      toggle.checked = false;
+    }
+    function onConfirm() { cleanup(); resolve(input.value); }
+    function onCancel()  { cleanup(); resolve(null); }
+
+    btnConfirm.addEventListener('click', onConfirm);
+    btnCancel.addEventListener('click', onCancel);
+  });
 }

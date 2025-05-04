@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen} = require('electron');
+const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const mysql = require('mysql2');
@@ -76,15 +76,7 @@ ipcMain.handle('auth-register', async (event, { username, password }) => {
 ipcMain.handle('auth-login', async (event, { username, password }) => {
   try {
     const [rows] = await db.execute(
-      `SELECT 
-         id, 
-         password_hash, 
-         level, 
-         xp, 
-         tasks_completed, 
-         streak_days 
-       FROM users 
-       WHERE username = ?`,
+      'SELECT id, password_hash FROM users WHERE username = ?',
       [username]
     );
 
@@ -92,27 +84,17 @@ ipcMain.handle('auth-login', async (event, { username, password }) => {
       return { success: false, message: 'Invalid username or password' };
     }
 
-    const {
-      id,
-      password_hash,
-      level,
-      xp,
-      tasks_completed,
-      streak_days
-    } = rows[0];
+    const { id, password_hash } = rows[0];
 
     const match = await bcrypt.compare(password, password_hash);
     if (!match) {
       return { success: false, message: 'Invalid username or password' };
     }
-    
+
+    // If sucessful, return the userid
     return {
       success: true,
-      userId: id,
-      level,
-      experience: xp,
-      tasksCompleted: tasks_completed,
-      streakDays: streak_days
+      userId: id
     };
   } catch (err) {
     console.error('Login error:', err);
@@ -129,10 +111,10 @@ ipcMain.on('auth-login-success', (event, userId) => {
   }
   // Reloads and shows the existing mainWindow if it still exists if not then creates a new main window
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.loadFile(path.join(__dirname, 'index.html')); 
+    mainWindow.loadFile(path.join(__dirname, 'index.html'));
     mainWindow.show();
   } else {
-    createMainWindow(); 
+    createMainWindow();
   }
 });
 
@@ -233,7 +215,7 @@ async function updateOverlayBounds(win) {
     const { scaleFactor, bounds: dbb } = display;
     const dipX = Math.round(dbb.x + (x - dbb.x) / scaleFactor);
     const dipY = Math.round(dbb.y + (y - dbb.y) / scaleFactor);
-    const dipW = Math.round(width  / scaleFactor);
+    const dipW = Math.round(width / scaleFactor);
     const dipH = Math.round(height / scaleFactor);
 
     win.setBounds({ x: dipX, y: dipY, width: dipW, height: dipH });
@@ -249,6 +231,7 @@ function createLoginWindow() {
     width: 400,
     height: 500,
     frame: false,
+    title: "Focustra Login",
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -264,10 +247,12 @@ function createMainWindow() {
     width: 800,
     height: 600,
     frame: false,
+    title: 'Focustra',
     titleBarStyle: 'hidden',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      backgroundThrottling: false,
       contextIsolation: true,
       nodeIntegration: false
     }
@@ -459,6 +444,35 @@ ipcMain.handle('db:getWeeklyAppUsage', async (e, userId) => {
   }
 });
 
+// GETS TODAYS AND YESTERDAYS COMPLETED TASKS 
+ipcMain.handle('db:getDailyCompletionCounts', async (event, userId) => {
+  try {
+    const [resultSets] = await db.query(
+      'CALL proc_get_daily_completion_counts(?)',
+      [userId]
+    );
+    const rows = resultSets[0] || [];
+    const row = rows[0] || {};
+    const today = row.today ?? 0;
+    const yesterday = row.yesterday ?? 0;
+    return { today, yesterday };
+  } catch (err) {
+    console.error('getDailyCompletionCounts error:', err);
+    return { today: 0, yesterday: 0 };
+  }
+});
+
+
+// UPDATES A GIVEN USER'S PRODUCTIVITY SCORE
+ipcMain.handle(
+  'db:updateProductivityScore',
+  (event, userId, score, reset) =>
+    db
+      .execute('CALL proc_update_productivity(?, ?, ?)', [userId, score, reset])
+      .then(() => ({ success: true }))
+      .catch(err => ({ success: false, error: err }))
+);
+
 // ADD DISTRACTING APP
 ipcMain.handle('db:addDistractingApp', async (event, userId, appName) => {
   try {
@@ -531,7 +545,7 @@ ipcMain.handle('db:addXP', async (event, userId, xp) => {
 // GET LEADERBOARD
 ipcMain.handle('db:getLeaderboard', async () => {
   try {
-    const [rows] = await db.query('SELECT * FROM leaderboard ORDER BY level DESC');
+    const [rows] = await db.query('SELECT * FROM leaderboard ORDER BY level DESC LIMIT 15');
     return rows;
   } catch (err) {
     console.error('Get leaderboard error:', err);

@@ -3,6 +3,7 @@ let timer = null;
 let timeRemaining = 25 * 60; // Default 25 minutes in seconds
 let isPaused = false;
 let totalFocusTime = 0;
+let lastFocusAwardSeconds = 0;
 let focusTime = 25 * 60; // Default focus time
 let breakTime = 5 * 60; // Default break time
 let isBreak = false;
@@ -20,6 +21,8 @@ let lastTrackedApp = null;
 let weeklyAppUsageChart = null;
 let currentUsageType = 'daily';
 let appUsageCounter = 0;
+let productivityScore = 0;
+let lastProdInitDate = null; // date when daily reset ran
 let appUsageData = {};
 let openFolderIds = new Set(); // To track open folders
 let currentUserId = parseInt(localStorage.getItem('userId')) || 0;
@@ -88,6 +91,7 @@ async function loadAllData() {
 
   await renderDistractingApps();
   await trackApplicationUsage();
+  await updateProductivityUI();
 }
 
 /* CUSTOM TITLE BAR AND SETUP */
@@ -124,6 +128,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       userExp = stats.xp;
       totalTasksCompleted = stats.tasks_completed;
       streakDays = stats.streak_days;
+      productivityScore = Number(stats.productivity_score);
+      lastProdInitDate = stats.last_productivity_init_date;
       updateLevelUI();
       updateProfileUI();
     }
@@ -235,6 +241,7 @@ document.getElementById('usageToggle').addEventListener('click', async (e) => {
   // Updates the app usage list based on the chart type
   const listEl = document.getElementById('app-usage-list');
   if (type === 'daily') {
+    await flushUnsavedAppUsageToDatabase();
     await loadAppUsageFromDatabase();
   } else {
     await flushUnsavedAppUsageToDatabase(true);
@@ -402,21 +409,21 @@ async function addTask(folderId) {
   else if (!due_date) {
     return showAlert('Task must have a due date', 'error');
   }
-   // Prevents past due dates from being added
-   const today = new Date().toISOString().split('T')[0];
-   if (due_date < today) {
-     return showAlert('Due date cannot be in the past', 'error');
-   }
- 
-   // Prevents duplicate task names
-   const tasks = await window.dbAPI.getTasks(currentUserId);
-   const duplicate = tasks.some(t =>
-     t.folder_id === folderId &&
-     t.title.trim().toLowerCase() === title.toLowerCase()
-   );
-   if (duplicate) {
-     return showAlert('Task with the same name already exists in this folder', 'error');
-   }
+  // Prevents past due dates from being added
+  const today = new Date().toISOString().split('T')[0];
+  if (due_date < today) {
+    return showAlert('Due date cannot be in the past', 'error');
+  }
+
+  // Prevents duplicate task names
+  const tasks = await window.dbAPI.getTasks(currentUserId);
+  const duplicate = tasks.some(t =>
+    t.folder_id === folderId &&
+    t.title.trim().toLowerCase() === title.toLowerCase()
+  );
+  if (duplicate) {
+    return showAlert('Task with the same name already exists in this folder', 'error');
+  }
 
   await window.dbAPI.createTask(folderId, title, due_date, priority, status);
 
@@ -432,7 +439,8 @@ async function addTask(folderId) {
 
 // Adds folder to the database
 async function onAddFolder() {
-  const name = document.getElementById('folder-name').value.trim();
+  const nameInput = document.getElementById('folder-name');
+  const name = nameInput.value.trim();
   if (!name) return showAlert('Folder name cannot be empty', 'error');
 
   // Prevents duplicate folder names
@@ -975,6 +983,7 @@ async function onAddDistractingApp() {
   txt.value = '';
   showAlert('Distracting app added successfully!', 'success');
   await renderDistractingApps();
+  await updateProductivityUI();
 }
 
 /*
@@ -994,74 +1003,78 @@ function updateTimerDisplay() {
   window.rendererAPI.sendTimerUpdate(timeRemaining, isBreak);
 }
 
-// Function to start the timer
+// Function to start or resume the timer
 async function startTimer() {
   if (timer) return;  // Prevents starting a new timer if already running
 
   isPaused = false;
   window.rendererAPI.setFocusState(true);
-  focusTime = parseInt(document.getElementById("focus-input").value) * 60;
-  breakTime = parseInt(document.getElementById("break-input").value) * 60;
+  // Only clear XP baseline when there's a fresh start
+  if (timeRemaining === (parseInt(document.getElementById("focus-input").value, 10) * 60)) {
+    lastFocusAwardSeconds = 0;
+  }
+  focusTime = parseInt(document.getElementById("focus-input").value, 10) * 60;
+  breakTime = parseInt(document.getElementById("break-input").value, 10) * 60;
 
-  const initialTime = isBreak ? breakTime : focusTime;
-  if (timeRemaining <= 0) timeRemaining = initialTime;
+  // Reset to the correct slice if time remaining is finished
+  if (timeRemaining <= 0) {
+    timeRemaining = isBreak ? breakTime : focusTime;
+  }
 
   timer = setInterval(async () => {
-    if (!isPaused) {
-      timeRemaining--;
-      updateTimerDisplay(timeRemaining);
-      window.rendererAPI?.sendTimerUpdate?.(timeRemaining, isBreak);
+    if (isPaused) return;
+    timeRemaining--;
+    updateTimerDisplay();
+    window.rendererAPI.sendTimerUpdate(timeRemaining, isBreak);
 
+    if (!isBreak) {
+      totalFocusTime++;
+      focusSecondCounter++;
+
+      // Updates the weeklyfocus chart
+      const now = new Date();
+      const weekday = now.getDay();
+      weeklyFocusData[weekday] += 1;
+      if (focusChart) {
+        const index = (weekday + 6) % 7;
+        focusChart.data.datasets[0].data[index] = weeklyFocusData[weekday];
+
+        const values = focusChart.data.datasets[0].data;
+        const maxSec = Math.max(...values, 10);
+        const step = maxSec < 60 ? 10 : maxSec < 3600 ? 60 : 600;
+        const chartMax = step * Math.ceil(maxSec / step);
+
+        focusChart.options.scales.y.max = chartMax;
+        focusChart.options.scales.y.ticks.stepSize = step;
+
+        focusChart.update({
+          duration: 300,
+          easing: 'easeOutQuart',
+        });
+      }
+
+      // Saves to database every 60 seconds
+      if (focusSecondCounter >= 60) {
+        await window.dbAPI.addFocusTime(currentUserId, 60);
+        focusSecondCounter = 0;
+      }
+    }
+
+    // Switches from focus to break
+    if (timeRemaining <= 0) {
+      clearInterval(timer);
+      timer = null;
+      isBreak = !isBreak;
+
+      // Awards the session XP once at end of focus slice
       if (!isBreak) {
-        totalFocusTime++;
-        focusSecondCounter++;
-
-        const now = new Date();
-        const weekday = now.getDay();
-        weeklyFocusData[weekday] += 1;
-
-        if (focusChart) {
-          const index = (weekday + 6) % 7;
-          focusChart.data.datasets[0].data[index] = weeklyFocusData[weekday];
-
-          const values = focusChart.data.datasets[0].data;
-          const maxSec = Math.max(...values, 10);
-          const step = maxSec < 60 ? 10 : maxSec < 3600 ? 60 : 600;
-          const chartMax = step * Math.ceil(maxSec / step);
-
-          focusChart.options.scales.y.max = chartMax;
-          focusChart.options.scales.y.ticks.stepSize = step;
-
-          focusChart.update({
-            duration: 300,
-            easing: 'easeOutQuart',
-          });
-        }
-
-        if (focusSecondCounter >= 60) {
-          await window.dbAPI.addFocusTime(currentUserId, 60);
-          focusSecondCounter = 0;
-        }
+        const xpGained = Math.floor(focusTime / 60) * 10;
+        await window.dbAPI.addXP(currentUserId, xpGained);
       }
 
-      if (timeRemaining <= 0) {
-        clearInterval(timer);
-        timer = null;
-        timeRemaining = isBreak ? focusTime : breakTime;
-        isBreak = !isBreak;
-
-        if (!isBreak && !sessionXpAwarded) {
-          const xpGained = Math.floor(focusTime / 60) * 10;
-          await window.dbAPI.addXP(currentUserId, xpGained);
-          sessionXpAwarded = true;
-        }
-
-        if (isBreak) {
-          sessionXpAwarded = false;
-        }
-
-        startTimer();
-      }
+      // Resets flag so next focus slice can be awarded again
+      sessionXpAwarded = false;
+      startTimer();
     }
   }, 1000);
 }
@@ -1069,42 +1082,55 @@ async function startTimer() {
 // Function to pause the timer 
 async function pauseTimer() {
   if (timer && !isPaused) {
+    // Stops the tick
     clearInterval(timer);
     timer = null;
     isPaused = true;
     window.rendererAPI.setFocusState(false);
 
-    if (!isBreak && !sessionXpAwarded) {
+    if (!isBreak) {
       const sessionSeconds = focusTime - timeRemaining;
-      const xpEarned = Math.floor(sessionSeconds / 60);
+      // Awards only the seconds that have not yet been converted into XP
+      const newSeconds = sessionSeconds - lastFocusAwardSeconds;
+      const xpEarned = Math.floor(newSeconds / 60);
 
+      // Adds XP to user and updates the database
       if (xpEarned > 0) {
-        // Adds XP to user and updates the database
         await window.dbAPI.addXP(currentUserId, xpEarned);
         awardExp(xpEarned);
         showAlert(`Session paused! You earned ${xpEarned} XP`, "success");
       }
 
+      // Updates the productivity UI with the full session so far
+      await updateProductivityUI('focus', sessionSeconds);
+      lastFocusAwardSeconds = sessionSeconds;
       sessionXpAwarded = true;
     }
   }
 }
 
 // Function to reset the timer
-function resetTimer() {
+async function resetTimer() {
   window.rendererAPI.setFocusState(false);
-  // Only awards if not yet awarded in this session slice
-  if (!isBreak && !sessionXpAwarded) {
+  // Calculates and awards only the new XP since last pause/reset
+  if (!isBreak) {
     const sessionSeconds = focusTime - timeRemaining;
-    const xpEarned = Math.floor(sessionSeconds / 60);
+    const newSeconds = sessionSeconds - lastFocusAwardSeconds;
+    const xpEarned = Math.floor(newSeconds / 60);
+
     if (xpEarned > 0) {
+      await window.dbAPI.addXP(currentUserId, xpEarned);
       awardExp(xpEarned);
       showAlert(`Timer reset! You earned ${xpEarned} XP.`, "success");
     }
+
+    // Updates UI and the baseline
+    await updateProductivityUI('focus', sessionSeconds);
+    lastFocusAwardSeconds = sessionSeconds;
     sessionXpAwarded = true;
   }
 
-  // Reset logic
+  // Reset time logic
   clearInterval(timer);
   timer = null;
   isPaused = false;
@@ -1197,7 +1223,7 @@ async function trackApplicationUsage() {
 
   // Increments only the unsaved localTime
   appUsageData[appName].localTime += 1;
- 
+
   // Flushes data every 30s
   appSecondCounter += 1;
   if (appSecondCounter >= 30) {
@@ -1251,18 +1277,18 @@ async function renderWeeklyAppUsageChart() {
     const rows = await window.dbAPI.getWeeklyAppUsage(currentUserId);
 
     const data = rows
-  .map(r => {
-    const name = formatAppName(r.app_name);
-    const dbSecs = r.total_seconds != null
-      ? parseInt(r.total_seconds, 10)
-      : (parseFloat(r.total_minutes) || 0) * 60;
-    const localSecs = appUsageData[name]?.localTime || 0;
-    return { app: name, secs: dbSecs + localSecs };
-  })
-  .filter(d => !excludedApps.includes(d.app.toLowerCase()))    
-  .sort((a, b) => b.secs - a.secs)
+      .map(r => {
+        const name = formatAppName(r.app_name);
+        const dbSecs = r.total_seconds != null
+          ? parseInt(r.total_seconds, 10)
+          : (parseFloat(r.total_minutes) || 0) * 60;
+        const localSecs = appUsageData[name]?.localTime || 0;
+        return { app: name, secs: dbSecs + localSecs };
+      })
+      .filter(d => !excludedApps.includes(d.app.toLowerCase()))
+      .sort((a, b) => b.secs - a.secs)
       .slice(0, 5);
-      
+
 
     const labels = data.map(d => d.app);
     const values = data.map(d => d.secs);
@@ -1330,16 +1356,16 @@ async function renderWeeklyUsageList() {
 
   const rows = await window.dbAPI.getWeeklyAppUsage(currentUserId);
   const data = rows
-  .map(r => {
-    const appName = formatAppName(r.app_name);
-    const dbSecs = r.total_seconds != null
-      ? parseInt(r.total_seconds, 10)
-      : (parseFloat(r.total_minutes) || 0) * 60;
-    const localSecs = appUsageData[appName]?.localTime || 0;
-    const icon = iconMapping[appName] ?? null;
-    return { app: appName, secs: dbSecs + localSecs, icon };
-  })
-  .filter(d => !excludedApps.includes(d.app.toLowerCase()))
+    .map(r => {
+      const appName = formatAppName(r.app_name);
+      const dbSecs = r.total_seconds != null
+        ? parseInt(r.total_seconds, 10)
+        : (parseFloat(r.total_minutes) || 0) * 60;
+      const localSecs = appUsageData[appName]?.localTime || 0;
+      const icon = iconMapping[appName] ?? null;
+      return { app: appName, secs: dbSecs + localSecs, icon };
+    })
+    .filter(d => !excludedApps.includes(d.app.toLowerCase()))
     .sort((a, b) => b.secs - a.secs);
 
   listEl.innerHTML = data.map(d => `
@@ -1558,6 +1584,7 @@ async function toggleTaskCompletion(taskId) {
     removalTimers[taskId] = setTimeout(async () => {
       await window.dbAPI.completeTask(taskId);
       totalTasksCompleted++;
+      await updateProductivityUI('task');
       await loadFoldersAndTasks(folderIdNum);
 
       // Ensures the folder is open after task completion
@@ -1865,7 +1892,7 @@ async function renderLeaderboard() {
   await window.dbAPI.refreshLeaderboard();
   const rows = await window.dbAPI.getLeaderboard();
   const tbody = document.querySelector('#leaderboard-section table tbody');
-  
+
   // Displays message if no users are on the leaderboard
   if (!rows || rows.length === 0) {
     tbody.innerHTML = `
@@ -1916,10 +1943,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentUserId) {
         const result = await window.dbAPI.setLeaderboardVisibility(currentUserId, hide);
         if (!result.success) {
-          console.error('Failed to update leaderboard visibility');
+          showAlert('Failed to update leaderboard visibility', 'error');
         } else {
           await window.dbAPI.refreshLeaderboard();
           await renderLeaderboard();
+          showAlert(
+            `Leaderboard ${hide ? 'hidden' : 'visible'}`,
+            'success'
+          );
         }
       }
     });
@@ -1938,6 +1969,10 @@ document.addEventListener('DOMContentLoaded', () => {
       updated[currentUserId] = enabled;
       localStorage.setItem('transparencyByUser', JSON.stringify(updated));
       window.SettingsAPI.sendTransparencySetting(enabled);
+      showAlert(
+        `Transparent overlay ${enabled ? 'enabled' : 'disabled'}`,
+        'success'
+      );
     });
   }
 
@@ -1945,8 +1980,8 @@ document.addEventListener('DOMContentLoaded', () => {
   changePasswordButton?.addEventListener('click', async () => {
     const current = await showPrompt('Enter current password:');
     if (!current) return;
-    const newPwd  = await showPrompt('Enter new password:');
-    if (!newPwd)  return;
+    const newPwd = await showPrompt('Enter new password:');
+    if (!newPwd) return;
     const confirm = await showPrompt('Confirm new password:');
     if (newPwd !== confirm) {
       showAlert('Passwords do not match', 'error');
@@ -1988,9 +2023,162 @@ async function showPrompt(message) {
       toggle.checked = false;
     }
     function onConfirm() { cleanup(); resolve(input.value); }
-    function onCancel()  { cleanup(); resolve(null); }
+    function onCancel() { cleanup(); resolve(null); }
 
     btnConfirm.addEventListener('click', onConfirm);
     btnCancel.addEventListener('click', onCancel);
   });
+}
+
+/*
+-------------------------- 
+PRODUCTIVITY SECTION
+--------------------------
+*/
+
+// Calculates ProductivityScore
+async function calculateProductivityScore(oldScore, actionType, triggerValue = 0, init_reset = false) {
+  // Variables setup
+  let delta = 0;
+  const { today: todayStr, yesterday: yesterdayStr } = await window.dbAPI.getDailyCompletionCounts(currentUserId);
+  const tasksToday = Number(todayStr);
+  const tasksYesterday = Number(yesterdayStr);
+
+  // Completing a task gives +0.05 (+0.10 if it's their first task of the day)
+  if (actionType === 'task') {
+    if (tasksToday > 5) { // Limits the amount of points they can gain for just doing tasks
+      delta += 0;
+    }
+    else if (tasksToday == 1) {
+      delta += 0.10;
+    }
+    else {
+      delta += 0.05;
+    }
+  }
+
+  // Every 30 mins of focus gives + 0.05 
+  else if (actionType === 'focus') {
+    const focusMins = Math.floor(triggerValue / 60);
+    const focusBlocks = Math.floor(focusMins / 30);
+    const maxFocusBlocks = Math.floor((4 * 60) / 30);   // 4 hrs cap
+    const appliedBlocks = Math.min(focusBlocks, maxFocusBlocks);
+    delta += appliedBlocks * 0.05;
+  }
+
+  else if (actionType === 'init') {
+    const todayIndex = new Date().getDay();
+    const todaySecs = weeklyFocusData[todayIndex] || 0;
+    const yesterdayIndex = (todayIndex + 6) % 7;
+    const yesterdaySecs = weeklyFocusData[yesterdayIndex] || 0;
+    const todayMins = Math.floor(todaySecs / 60);
+    const yesterdayMins = Math.floor(yesterdaySecs / 60);
+    const todayBlocks = Math.floor(todayMins / 30);
+    const yesterdayBlocks = Math.floor(yesterdayMins / 30);
+
+    // If user has no recent activity to analyse then just return default score (5.0)
+    if ((todayMins === 0 && tasksToday === 0) && (yesterdayMins === 0 && tasksYesterday === 0)) {
+      console.log("Init skipped: insufficient data for today/yesterday");
+      return oldScore;
+    }
+    if (init_reset) {
+      // Penalty if todays focus session was less than yesterdays
+      const diffBlocks = todayBlocks - yesterdayBlocks;
+      delta += diffBlocks * 0.15;
+
+      // Calculates improvement ratio
+      const improvementRatio = yesterdayMins > 0 ? todayMins / yesterdayMins : 1;
+      if (improvementRatio > 1) {
+        delta += (improvementRatio - 1) * 0.15;
+      } else if (improvementRatio < 1) {
+        delta += -0.15;
+      } else {
+        delta += 0;
+      }
+
+      // Penalty if fewer tasks completed today in comparison to yesterday
+      const taskDiff = Math.min(0, tasksToday - tasksYesterday);
+      if (taskDiff < 0) {
+        const taskPenalty = taskDiff * 0.05;
+        delta += taskPenalty;
+      }
+
+      // Fetches list of distracting apps from DB
+      const items = await window.dbAPI.getDistractingApps(currentUserId);
+      const names = items.map(i => formatAppName(i.app_name));
+      // Sums usage for each distracting app
+      let totalSecs = 0;
+      for (const name of names) {
+        const entry = appUsageData[name];
+        if (entry) {
+          totalSecs += (entry.dbTime || 0) + (entry.localTime || 0);
+        }
+      }
+      //Penalty for spending time on distracting apps (every 30 mins gives -0.05)
+      const totalMins = Math.floor(totalSecs / 60);
+      const blocks = Math.floor(totalMins / 30);
+      delta -= blocks * 0.05;
+
+      // Penalty for switching too many apps
+      const rows = document.querySelectorAll('#app-usage-list li');
+      const appSet = new Set();
+
+      // Checks how many different apps have been opened today
+      rows.forEach(li => {
+        const nameSpan = li.querySelector('span.font-semibold');
+        if (nameSpan) {
+          appSet.add(nameSpan.textContent.trim());
+        }
+      });
+
+      const usedCount = appSet.size;
+      // Penalty for switching too many apps
+      const switchPenalty = usedCount > 5 ? (usedCount - 5) * 0.01 : 0;
+      delta -= switchPenalty;
+    }
+  }
+  // Clamps between 0 and 10
+  const newScore = Math.min(10, Math.max(0, oldScore + delta));
+  return newScore;
+}
+
+// Updates the ProductivityUI and updates db too
+async function updateProductivityUI(actionType = 'init', triggerValue = 0) {
+  const circle = document.getElementById('productivity-score-circle');
+  const text = document.getElementById('productivity-score-text');
+
+  // Checks if score has already been reset and recalculated for today
+  const todayStr = asLocalDateString(new Date());
+  const lastInitStr = lastProdInitDate
+    ? (typeof lastProdInitDate === 'string'
+      ? lastProdInitDate
+      : asLocalDateString(new Date(lastProdInitDate)))
+    : null;
+  if (lastInitStr === todayStr) {
+    console.log("dailyReset skipped: Already initialized for today");
+
+    const newScore = await calculateProductivityScore(productivityScore, actionType, triggerValue);
+    productivityScore = newScore;
+    await window.dbAPI.updateProductivityScore(currentUserId, productivityScore, false);
+  }
+
+  else {
+    console.log("Applying daily reset!");
+    const newScore = await calculateProductivityScore(productivityScore, actionType, triggerValue, true);
+    productivityScore = newScore;
+    await window.dbAPI.updateProductivityScore(currentUserId, productivityScore, true);
+    lastProdInitDate = todayStr;
+  }
+  // Updates the UI and shows to 1dp
+  const displayScore = Math.round(productivityScore * 10) / 10;
+  circle.style.setProperty('--value', displayScore * 10);
+  text.textContent = `${displayScore}/10`;
+}
+
+//Converts date into "YYYY-MM-DD" using local date values
+function asLocalDateString(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

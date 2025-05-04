@@ -61,10 +61,10 @@ contextBridge.exposeInMainWorld('dbAPI', {
   getFocusSessions: uid => ipcRenderer.invoke('db:getFocusSessions', uid),
 
   // App usage operations
-  addAppUsage:       (uid, app, secs) => ipcRenderer.invoke('db:addAppUsage',       uid, app, secs),
-  getDailyAppUsage:  uid =>            ipcRenderer.invoke('db:getDailyAppUsage',  uid),
-  getWeeklyAppUsage: uid =>            ipcRenderer.invoke('db:getWeeklyAppUsage', uid),
-  
+  addAppUsage: (uid, app, secs) => ipcRenderer.invoke('db:addAppUsage', uid, app, secs),
+  getDailyAppUsage: uid => ipcRenderer.invoke('db:getDailyAppUsage', uid),
+  getWeeklyAppUsage: uid => ipcRenderer.invoke('db:getWeeklyAppUsage', uid),
+
   // Distracting app operations
   getDistractingApps: uid => ipcRenderer.invoke('db:getDistractingApps', uid),
   addDistractingApp: (uid, app) => ipcRenderer.invoke('db:addDistractingApp', uid, app),
@@ -73,6 +73,8 @@ contextBridge.exposeInMainWorld('dbAPI', {
   // User stats operations
   getUserStats: uid => ipcRenderer.invoke('db:getUserStats', uid),
   updateStreakDays: (uid, streak) => ipcRenderer.invoke('db:updateStreakDays', uid, streak),
+  getDailyCompletionCounts: uid => ipcRenderer.invoke('db:getDailyCompletionCounts', uid),
+  updateProductivityScore: (userId, score, reset) => ipcRenderer.invoke('db:updateProductivityScore', userId, score, reset),
 
   // Leaderboard operations
   getLeaderboard: () => ipcRenderer.invoke('db:getLeaderboard'),
@@ -118,8 +120,8 @@ contextBridge.exposeInMainWorld('overlayAPI', {
 contextBridge.exposeInMainWorld('rendererAPI', {
   sendTimerUpdate: (time, isBreak) => ipcRenderer.send('timer-update', time, isBreak),
   onPauseCommand: (callback) => ipcRenderer.on('pause-timer', () => callback()),
-  setFocusState:    (isActive)      => ipcRenderer.send('focus-timer-state', isActive),
-  onPauseCommand:   (callback)      => ipcRenderer.on('pause-timer', () => callback())
+  setFocusState: (isActive) => ipcRenderer.send('focus-timer-state', isActive),
+  onPauseCommand: (callback) => ipcRenderer.on('pause-timer', () => callback())
 });
 
 // Settings API to change certain settings in the app

@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Stores user id in local storage
     localStorage.setItem('userId', result.userId);
-  
+
     // Redirects to main page
     window.location.href = 'index.html'; // or whatever your main page is
   });

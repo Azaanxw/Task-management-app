@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html data-theme="dark" lang="en" class="bg-base-200">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <link href="./output.css" rel="stylesheet">
 </head>
+
 <body>
 
   <!-- Custom Title Bar -->
   <header id="titlebar" style="-webkit-app-region: drag;" class="sticky top-0 z-50 w-full h-8 flex items-center justify-between
                  px-3 bg-base-200 border-b border-base-300 text-sm font-medium leading-none">
-    <span class="truncate select-none">Task Manager</span>
+    <span class="truncate select-none">Focustra</span>
     <div class="flex gap-2" style="-webkit-app-region: no-drag;">
       <button id="min-btn" class="btn btn-xs btn-ghost rounded-none p-1">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24"
@@ -74,12 +76,11 @@
 
     </div>
   </div>
-  <div
-  id="alert-container"
-  class="fixed bottom-4 left-1/2 transform -translate-x-1/2
+  <div id="alert-container" class="fixed bottom-4 left-1/2 transform -translate-x-1/2
          flex flex-col items-center space-y-2
          z-[1000] pointer-events-none">
-</div>
+  </div>
 </body>
 <script src="./authentication.js"></script>
+
 </html>

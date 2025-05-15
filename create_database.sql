@@ -63,7 +63,6 @@ CREATE TABLE
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
-
 -- Leaderboard 
 CREATE TABLE
   IF NOT EXISTS leaderboard (
@@ -72,7 +71,6 @@ CREATE TABLE
     level INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
-
 
 -- Focus sessions
 CREATE TABLE
@@ -86,7 +84,6 @@ CREATE TABLE
     UNIQUE KEY(user_id, session_date)
   );
 
-
 -- All completed tasks 
 CREATE TABLE
   IF NOT EXISTS task_completions (
@@ -97,21 +94,15 @@ CREATE TABLE
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+DELIMITER $$
 
-DELIMITER $$-- Stored Procedures
+-- Stored Procedures
+
 -- Adds XP to a user and levels them up if necessary
 CREATE PROCEDURE proc_add_xp(IN p_user_id INT, IN p_xp INT) BEGIN DECLARE cur_xp INT;
-
-
 DECLARE cur_lvl INT;
-
-
 DECLARE threshold INT DEFAULT 100;
-
-
 DECLARE new_xp INT;
-
-
 SELECT
   xp,
   level INTO cur_xp,
@@ -120,24 +111,17 @@ FROM
   users
 WHERE
   id = p_user_id;
-
-
 SET
   new_xp = cur_xp + p_xp;
-
 
 WHILE new_xp >= threshold DO
 SET
   new_xp = new_xp - threshold;
 
-
 SET
   cur_lvl = cur_lvl + 1;
 
-
 END WHILE;
-
-
 UPDATE
   users
 SET
@@ -146,8 +130,9 @@ SET
 WHERE
   id = p_user_id;
 
+END $$
 
-END $$-- Gets tasks completed today and yesterday
+-- Gets tasks completed today and yesterday
 CREATE PROCEDURE proc_get_daily_completion_counts(IN p_user_id INT) BEGIN
 SELECT
   SUM(
@@ -167,10 +152,9 @@ FROM
 WHERE
   user_id = p_user_id;
 
-
-END $$-- Marks a task as completed and awards XP before deleting it
+END $$
+-- Marks a task as completed and awards XP before deleting it
 CREATE PROCEDURE proc_complete_task(IN p_task_id INT) BEGIN DECLARE f_id INT;
-
 DECLARE u_id INT;
 DECLARE xp_gain INT DEFAULT 20;
 SELECT
@@ -214,17 +198,18 @@ VALUES
 UPDATE
   total_seconds = total_seconds + p_seconds;
 
+END $$
+-- FOLDER MANAGEMENT
 
-END $$-- FOLDER MANAGEMENT
 -- Creates a folder
 CREATE PROCEDURE proc_create_folder(IN p_user_id INT, IN p_name VARCHAR(255)) BEGIN
 INSERT INTO
   folders(user_id, name)
 VALUES
 (p_user_id, p_name);
+END $$
 
-
-END $$-- Lists folders for a user 
+-- Lists folders for a user 
 CREATE PROCEDURE proc_get_folders(IN p_user_id INT) BEGIN
 SELECT
   *
@@ -233,8 +218,9 @@ FROM
 WHERE
   user_id = p_user_id;
 
+END $$
 
-END $$-- Updates folder name
+-- Updates folder name
 CREATE PROCEDURE proc_update_folder(IN p_folder_id INT, IN p_name VARCHAR(255)) BEGIN
 UPDATE
   folders
@@ -243,16 +229,19 @@ SET
 WHERE
   id = p_folder_id;
 
+END $$
 
-END $$-- Deletes a folder
+-- Deletes a folder
 CREATE PROCEDURE proc_delete_folder(IN p_folder_id INT) BEGIN
 DELETE FROM
   folders
 WHERE
   id = p_folder_id;
 
+END $$
 
-END $$-- USER MANAGEMENT
+-- USER MANAGEMENT
+
 -- Gets user's stats
 CREATE PROCEDURE proc_get_user_stats(IN p_user_id INT) BEGIN
 SELECT
@@ -267,8 +256,9 @@ FROM
 WHERE
   id = p_user_id;
 
+END $$
 
-END $$-- Updates user's streak days
+-- Updates user's streak days
 CREATE PROCEDURE proc_update_streak_days(IN p_user_id INT, IN p_streak INT) BEGIN
 UPDATE
   users
@@ -277,8 +267,9 @@ SET
 WHERE
   id = p_user_id;
 
+END $$
 
-END $$-- Change a user’s password hash
+-- Change a user’s password hash
 CREATE PROCEDURE proc_change_password(IN p_user_id INT, IN p_new_password_hash VARCHAR(255)) BEGIN
 UPDATE
   users
@@ -287,8 +278,10 @@ SET
 WHERE
   id = p_user_id;
 
+END $$
 
-END $$-- TASK MANAGEMENT
+-- TASK MANAGEMENT
+
 -- Creates a task
 CREATE PROCEDURE proc_create_task(
   IN p_folder_id INT,
@@ -309,8 +302,9 @@ INSERT INTO
 VALUES
 (p_folder_id, p_title, FALSE, p_due, p_pri, p_stat);
 
+END $$
 
-END $$-- Returns tasks for a given user
+-- Returns tasks for a given user
 CREATE PROCEDURE proc_get_tasks_for_user(IN p_user_id INT) BEGIN
 SELECT
   t.*
@@ -319,15 +313,15 @@ FROM
   JOIN folders f ON t.folder_id = f.id
 WHERE
   f.user_id = p_user_id;
+END $$
 
-
-END $$-- Adds a distracting app for a user
+-- Adds a distracting app for a user
 CREATE PROCEDURE proc_add_distracting_app(IN p_user_id INT, IN p_app VARCHAR(255)) BEGIN INSERT IGNORE INTO distracting_apps(user_id, app_name)
 VALUES
 (p_user_id, p_app);
+END $$
 
-
-END $$-- Returns distracting apps for a user
+-- Returns distracting apps for a user
 CREATE PROCEDURE proc_get_distracting_apps(IN p_user_id INT) BEGIN
 SELECT
   *
@@ -336,8 +330,9 @@ FROM
 WHERE
   user_id = p_user_id;
 
+END $$
 
-END $$-- Removes a distracting app for a user
+-- Removes a distracting app for a user
 CREATE PROCEDURE proc_remove_distracting_app(IN p_user_id INT, IN p_app VARCHAR(255)) BEGIN
 DELETE FROM
   distracting_apps
@@ -345,8 +340,9 @@ WHERE
   user_id = p_user_id
   AND app_name = p_app;
 
+END $$
 
-END $$-- Adds app usage time for a user
+-- Adds app usage time for a user
 CREATE PROCEDURE proc_add_app_usage(
   IN p_user_id INT,
   IN p_app VARCHAR(255),
@@ -359,8 +355,9 @@ VALUES
 UPDATE
   daily_seconds = daily_seconds + p_seconds;
 
+END $$
 
-END $$-- Returns app usage time for a user for today
+-- Returns app usage time for a user for today
 CREATE PROCEDURE proc_get_daily_app_usage(IN p_user_id INT) BEGIN
 SELECT
   app_name,
@@ -372,9 +369,9 @@ WHERE
   AND record_date = CURDATE()
 ORDER BY
   total_seconds DESC;
+END $$
 
-
-END $$-- Updates a user's productivityScore
+-- Updates a user's productivityScore
 CREATE PROCEDURE proc_update_productivity(
   IN p_user_id INT,
   IN p_new_score DECIMAL(4, 1),
@@ -391,9 +388,9 @@ SET
   )
 WHERE
   id = p_user_id;
+END $$
 
-
-END $$-- Returns app usage time for a user for this week
+-- Returns app usage time for a user for this week
 CREATE PROCEDURE proc_get_weekly_app_usage(IN p_user_id INT) BEGIN
 SELECT
   app_name,
@@ -407,12 +404,10 @@ GROUP BY
   app_name
 ORDER BY
   total_seconds DESC;
+END $$
 
-
-END $$-- Updates leaderboard data for all users
+-- Updates leaderboard data for all users
 CREATE PROCEDURE proc_refresh_leaderboard() BEGIN TRUNCATE TABLE leaderboard;
-
-
 INSERT INTO
   leaderboard(user_id, username, level)
 SELECT
@@ -424,5 +419,4 @@ FROM
 WHERE
   hide_from_leaderboard = FALSE;
 
-
-END $$DELIMITER;
+END

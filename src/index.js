@@ -258,7 +258,6 @@ function createMainWindow() {
     }
   });
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
-
   createOverlayWindow();
   updateOverlayBounds(overlayWindow);
   setInterval(() => updateOverlayBounds(overlayWindow), 100);

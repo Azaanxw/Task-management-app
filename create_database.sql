@@ -171,20 +171,14 @@ WHERE
 END $$-- Marks a task as completed and awards XP before deleting it
 CREATE PROCEDURE proc_complete_task(IN p_task_id INT) BEGIN DECLARE f_id INT;
 
-
 DECLARE u_id INT;
-
-
 DECLARE xp_gain INT DEFAULT 20;
-
-
 SELECT
   folder_id INTO f_id
 FROM
   tasks
 WHERE
   id = p_task_id;
-
 
 SELECT
   user_id INTO u_id
@@ -193,31 +187,25 @@ FROM
 WHERE
   id = f_id;
 
-
 INSERT INTO
   task_completions(user_id, task_id)
 VALUES
 (u_id, p_task_id);
 
-
 CALL proc_add_xp(u_id, xp_gain);
-
-
 UPDATE
   users
 SET
   tasks_completed = tasks_completed + 1
 WHERE
   id = u_id;
-
-
 DELETE FROM
   tasks
 WHERE
   id = p_task_id;
+END $$
 
-
-END $$-- Records focus seconds for today and updates user total
+-- Records focus seconds for today and updates user total
 CREATE PROCEDURE proc_add_focus(IN p_user_id INT, IN p_seconds INT) BEGIN
 INSERT INTO
   focus_sessions(user_id, session_date, total_seconds)
